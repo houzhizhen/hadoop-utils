@@ -1,0 +1,1 @@
+hadoop jar target/fs-parallel-test-1.8.10.jar com.baidu.fs.raw.RawFs $*
