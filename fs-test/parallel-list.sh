@@ -1,1 +1,1 @@
-hadoop jar target/fs-parallel-test-1.8.10.jar com.baidu.fs.parallel.List 2 hdfs://localhost:9000/user/hive/warehouse/ 10 10
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.List 2 bos://bmr-agent-hbfsg/user/hive/warehouse/test.db/t1 10 200
