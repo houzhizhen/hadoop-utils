@@ -84,7 +84,7 @@ public class PutAndList {
 
     public void list(int iterationTimes, AtomicBoolean stopped) throws IOException {
         int nextPrintDegree = 1;
-        int i = 0
+        int i = 0;
         for (; i < iterationTimes && !stopped.get(); i++) {
             if (i == nextPrintDegree) {
                 nextPrintDegree = nextPrintDegree * 10;
