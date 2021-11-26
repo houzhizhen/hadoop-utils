@@ -9,19 +9,19 @@ import org.apache.hadoop.security.UserGroupInformation;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class ConnectWithKerberosTest {
-    public static final Log LOG = LogFactory.getLog(ConnectWithKerberosTest.class);
+public class ConnectWithoutKerberosTest {
+
+    public static final Log LOG = LogFactory.getLog(ConnectWithoutKerberosTest.class);
 
     private static Path ROOT = new Path("/");
 
-    public ConnectWithKerberosTest() {
+    public ConnectWithoutKerberosTest() {
 
     }
 
-    public static void connect(Configuration conf, String principal, String keytabLocation, boolean list) throws IOException {
+    public static void connect(Configuration conf, boolean list) throws IOException {
         FileSystem fs = null;
         try {
-            UserGroupInformation.loginUserFromKeytab(principal, keytabLocation);
             fs = FileSystem.get(conf);
             if (list) {
                 LOG.info(Arrays.toString(fs.listStatus(ROOT)));
@@ -35,24 +35,20 @@ public class ConnectWithKerberosTest {
         }
     }
 
-
     public static void main(String[] args) throws IOException {
         boolean list = false;
-        if(args.length < 3) {
+        if(args.length < 1) {
             printUsage();
             System.exit(1);
         }
-        if (args.length == 4) {
+        if (args.length == 2) {
             list = true;
         }
 
         Configuration conf = new HdfsConfiguration();
         conf.set("fs.hdfs.impl.disable.cache", "true");
-        String principal = System.getProperty("kerberosPrincipal", args[0]);
-        String keytabLocation = System.getProperty("kerberosKeytab",args[1]);
-        long connectTimes = Integer.parseInt(args[2]);
-        LOG.info(String.format("principal = %s, keytabLocation = %s, connectTimes=%s, list = %s",
-                               principal, keytabLocation, connectTimes, list));
+        long connectTimes = Integer.parseInt(args[0]);
+        LOG.info(String.format("connectTimes=%s, list = %s", connectTimes, list));
         // kinit with principal and keytab
         UserGroupInformation.setConfiguration(conf);
 
@@ -61,7 +57,7 @@ public class ConnectWithKerberosTest {
         long beginTime = System.currentTimeMillis();
         for (int i = 0; i < connectTimes; i++) {
             long startTime = System.currentTimeMillis();
-            connect(conf, principal, keytabLocation, list);
+            connect(conf, list);
             long duration = System.currentTimeMillis() - startTime;
             if (duration < minTime) {
                 minTime = duration;
@@ -76,6 +72,6 @@ public class ConnectWithKerberosTest {
     }
 
     private static void printUsage() {
-        LOG.info("Usage: ConnectWithKerberosTest principal keytab-file connectTimes [list]");
+        LOG.info("Usage: ConnectWithoutKerberosTest principal keytab-file connectTimes [list]");
     }
 }
