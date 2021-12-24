@@ -72,6 +72,6 @@ public class ConnectWithoutKerberosTest {
     }
 
     private static void printUsage() {
-        LOG.info("Usage: ConnectWithoutKerberosTest principal keytab-file connectTimes [list]");
+        LOG.info("Usage: ConnectWithoutKerberosTest connectTimes [list]");
     }
 }
