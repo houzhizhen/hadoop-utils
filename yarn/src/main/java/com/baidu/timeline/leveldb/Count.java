@@ -2,18 +2,11 @@ package com.baidu.timeline.leveldb;
 
 import org.iq80.leveldb.DBIterator;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class Count extends LevelDbBase {
-    private String str;
-
-    protected Count(String dbPath, String str) {
-        super(dbPath);
-        this.str = str;
-    }
+public class Count extends LevelDbUtil {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
@@ -24,43 +17,24 @@ public class Count extends LevelDbBase {
         String str = args[1];
         System.out.println("dbPath: " + dbPath);
         System.out.println("str: " + str);
-        Count count = new Count(dbPath, str);
-
+        AtomicLong count = new AtomicLong();
         try {
-            count.open();
-            count.process();
+            LevelDbUtil.process(dbPath, (Map.Entry<byte[], byte[]> entry) -> {
+                String key = new String(entry.getKey());
+                if (key.contains(str)) {
+                    count.incrementAndGet();
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            count.close();
+
         }
+        System.out.println("The number of keys that contains " + str + " is " + count);
     }
 
     private static void printUsage() {
         System.out.println("Usage:");
         System.out.println("hadoop jar yarn-1.8.10.jar com.baidu.timeline.leveldb.Count dbPath str");
-    }
-
-    @Override
-    public void process() throws IOException {
-        long count = 0;
-        try {
-            DBIterator iterator = this.db.iterator();
-            try {
-                for(iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
-                    String key = new String(iterator.peekNext().getKey());
-                    if (key.contains(str)) {
-                        count++;
-                    }
-                }
-            } finally {
-                // Make sure you close the iterator to avoid resource leaks.
-                iterator.close();
-            }
-
-        } finally {
-            db.close();
-        }
-        System.out.println("The number of keys that contains " + str + " is " + count);
     }
 }

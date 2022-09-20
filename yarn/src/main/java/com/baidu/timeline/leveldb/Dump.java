@@ -1,19 +1,11 @@
 package com.baidu.timeline.leveldb;
 
-import org.iq80.leveldb.DBIterator;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 
-public class Dump extends LevelDbBase {
-
-    private String dumpFile;
-
-    protected Dump(String dbPath, String dumpFile) {
-        super(dbPath);
-        this.dumpFile = dumpFile;
-    }
+public class Dump extends LevelDbUtil {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
@@ -25,42 +17,27 @@ public class Dump extends LevelDbBase {
         System.out.println("dbPath: " + dbPath);
         System.out.println("dumpFile: " + dumpFile);
 
-        Dump dump = new Dump(dbPath, dumpFile);
-
+        BufferedWriter writer = new BufferedWriter(new FileWriter(dumpFile));
         try {
-            dump.open();
-            dump.process();
+            LevelDbUtil.process(dbPath, (Map.Entry<byte[], byte[]> entry) -> {
+                String key = new String(entry.getKey());
+                String value = new String(entry.getValue());
+                try {
+                    writer.write(key+" = "+value +"\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("");
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            dump.close();
+            writer.close();
         }
     }
 
     private static void printUsage() {
         System.out.println("Usage:");
         System.out.println("hadoop jar yarn-1.8.10.jar com.baidu.timeline.leveldb.Dump dbPath dumpFile");
-    }
-
-    @Override
-    public void process() throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(dumpFile));
-        try {
-            DBIterator iterator = this.db.iterator();
-            try {
-                for(iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
-                    String key = new String(iterator.peekNext().getKey());
-                    String value = new String((iterator.peekNext().getValue()));
-                    writer.write(key+" = "+value +"\n");
-                }
-            } finally {
-                // Make sure you close the iterator to avoid resource leaks.
-                iterator.close();
-            }
-
-        } finally {
-            db.close();
-            writer.close();
-        }
     }
 }
