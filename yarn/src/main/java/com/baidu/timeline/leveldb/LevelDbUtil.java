@@ -1,5 +1,6 @@
 package com.baidu.timeline.leveldb;
 
+import org.apache.hadoop.io.WritableComparator;
 import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -26,5 +27,26 @@ public class LevelDbUtil {
         } finally {
             db.close();
         }
-    };
+    }
+
+    public static void filter(String dbPath, byte[] prefix, Consumer<Map.Entry<byte[], byte[]>> action) throws IOException {
+        JniDBFactory factory = JniDBFactory.factory;
+        DB db = factory.open(new File(dbPath), new Options());
+        try {
+            DBIterator iterator = db.iterator();
+            iterator.seek(prefix);
+            while(iterator.hasNext()) {
+                Map.Entry<byte[], byte[]> entry = iterator.next();
+                if (WritableComparator.compareBytes(prefix, 0, prefix.length,
+                                                    entry.getKey(), 0, prefix.length) == 0) {
+                    action.accept(entry);
+                } else {
+                    break;
+                }
+            }
+            iterator.close();
+        } finally {
+            db.close();
+        }
+    }
 }
