@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Parallel repeat put.
+ * Parallel put and list.
  * Each thread create specified number of subdirectories,
  * and put specified number of file in each subdirectory.
- * Then each thread put the file to each subdirectory with specified times.
+ * Then each file list the file in each subdirectory, list specified times.
  *
  * The directories in ${base_directory} look like:
  * ${base_directory}/thread_0
@@ -41,10 +42,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * ...
  * ${base_directory}/thread_${i}/subdir_${j}/file_k
  * (k means files created in each subdirectory)
+ *
+ * Then each thread list the subdirectories one by one, list specified times.
  */
-public class RepeatPut {
+public class RepeatGet {
 
-    public static final Log LOG = LogFactory.getLog(RepeatPut.class);
+    public static final Log LOG = LogFactory.getLog(RepeatGet.class);
     private static final byte[] EMPTY_BYTES = new byte[1024];
 
     private final FileSystem fileSystem;
@@ -53,7 +56,7 @@ public class RepeatPut {
     private final int fileNum;
     private final Path[] subDirs;
 
-    public RepeatPut(FileSystem fileSystem, Path basePath, int threadId, int subDirNum,
+    public RepeatGet(FileSystem fileSystem, Path basePath, int threadId, int subDirNum,
                       int fileNum) {
         this.fileSystem = fileSystem;
         this.threadId = threadId;
@@ -66,27 +69,10 @@ public class RepeatPut {
         }
     }
 
-    public void put(int iterationTimes, AtomicBoolean stopped) {
-        try {
-            this.createSubDirs();
-            for (int i = 0; i < iterationTimes && !stopped.get(); i++) {
-                this.putFiles();
-                LOG.info(String.format("Thread %s put %s times",
-                                       this.threadId, i));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            stopped.set(true);
-        }
-    }
-
-    private void createSubDirs() throws IOException {
+    public void put() throws IOException {
         for (int i = 0; i < this.subDirs.length; i++) {
             this.fileSystem.mkdirs(this.subDirs[i]);
         }
-    }
-
-    public void putFiles() throws IOException {
         for (int i = 0; i < this.subDirs.length; i++) {
             for (int j = 0; j < this.fileNum; j++) {
                 Path filePath = new Path(this.subDirs[i], "file_" + j);
@@ -97,6 +83,27 @@ public class RepeatPut {
         }
     }
 
+    public void get(int iterationTimes, AtomicBoolean stopped) throws IOException {
+        int nextPrintDegree = 1;
+        int i = 0;
+        for (; i < iterationTimes && !stopped.get(); i++) {
+            if (i == nextPrintDegree) {
+                nextPrintDegree = nextPrintDegree * 10;
+                LOG.info(String.format("Thread %s list %s times",
+                        this.threadId, i));
+            }
+            FileStatus[] statuses = this.fileSystem.listStatus(this.subDirs[i % this.subDirs.length]);
+            for (FileStatus status : statuses) {
+                InputStream in = fileSystem.open(status.getPath());
+                in.read(EMPTY_BYTES);
+                in.close();
+            }
+        }
+        
+        LOG.info(String.format("Thread %s list %s times, over.",
+                this.threadId, i));
+    }
+
     public static void main(String[] args) throws IOException {
         if(args.length != 5) {
             printUsage();
@@ -104,7 +111,7 @@ public class RepeatPut {
         }
 
         LOG.info(String.format("basePath='%s', threadNum=%s, subdirNum=%s, fileNum=%s, iterationTimes=%s",
-                               args[0], args[1], args[2], args[3], args[4]));
+                args[0], args[1], args[2], args[3], args[4]));
 
         URI uri = URI.create(args[0]);
         Path basePath = new Path(uri.getPath());
@@ -120,9 +127,15 @@ public class RepeatPut {
         ExecutorService es = Executors.newFixedThreadPool(threadNum);
         AtomicBoolean stopped = new AtomicBoolean();
         for (int i = 0; i < threadNum; i++) {
-            RepeatPut repeatPut = new RepeatPut(fs, basePath, i, subDirNum, fileNum);
+            RepeatGet repeatGet = new RepeatGet(fs, basePath, i, subDirNum, fileNum);
             es.submit(()-> {
-               repeatPut.put(iterationTimes, stopped);
+                try {
+                    // repeatGet.put();
+                    repeatGet.get(iterationTimes, stopped);
+                } catch (IOException e) {
+                    stopped.set(true);
+                    e.printStackTrace();
+                }
             });
         }
         es.shutdown();
@@ -136,6 +149,6 @@ public class RepeatPut {
     }
 
     private static void printUsage() {
-        LOG.info("Usage: PutAndList basePath threadNum subdirNum fileNum iterationTimes");
+        LOG.info("Usage: RepeatGet basePath threadNum subdirNum fileNum iterationTimes");
     }
 }
