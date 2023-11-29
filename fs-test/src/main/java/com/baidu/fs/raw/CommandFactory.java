@@ -12,6 +12,7 @@ public class CommandFactory {
 
     static {
         commandMap.put(MV.NAME, MV.class);
+        commandMap.put(MakeDirs.NAME, MakeDirs.class);
     }
 
     public static Command getCommand(Configuration conf, String name) {
