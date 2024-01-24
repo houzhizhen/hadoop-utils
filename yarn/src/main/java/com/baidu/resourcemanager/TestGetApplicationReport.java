@@ -13,48 +13,71 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class TestGetApplicationReport {
-    public static void main(String[] args) {
+
+    private static final String THREAD_NUM = "--thread-num";
+    private static final String WAIT_TIME = "--wait-time";
+    private static final String APP_ID = "--app-id";
+    private static final String CLUSTER_TIMESTAMP = "--cluster-timestamp";
+
+    public static void main(String[] args) throws IOException, YarnException {
         System.out.println("TestGetApplicationReport");
+        int threadNum = 10;
+        int waitTime = 10;
+        int id = 1;
         long clusterTimestamp = 1L;
-        int id = 2;
-        if (args.length == 2) {
-            clusterTimestamp = Long.parseLong(args[0]);
-            id = Integer.parseInt(args[1]);
+        for(int i = 0; i < args.length; ++i) {
+            if(args[i].equals(THREAD_NUM)) {
+
+                threadNum = Integer.parseInt(args[++i]);
+            }
+            if(args[i].equals(WAIT_TIME)) {
+                waitTime = Integer.parseInt(args[++i]);
+            }
+            if(args[i].equals(APP_ID)) {
+                id = Integer.parseInt(args[++i]);
+            }
+            if(args[i].equals(CLUSTER_TIMESTAMP)) {
+                clusterTimestamp = Long.parseLong(args[++i]);
+            }
         }
         System.out.println("clusterTimestamp: " + clusterTimestamp);
         System.out.println("id: " + id);
-        final ApplicationId applicationId = ApplicationId.newInstance(clusterTimestamp, id);
-        ExecutorService es = Executors.newFixedThreadPool(10);
-        es.submit(
-                () -> {
-                    YarnConfiguration conf = new YarnConfiguration();
-                    YarnClient client = YarnClient.createYarnClient();
-                    client.init(conf);
-                    client.start();
-                    List<QueueInfo> queueInfoList = null;
-                    try {
-                        queueInfoList = client.getAllQueues();
-                        System.out.println("get Queues size " + queueInfoList.size());
-                        for (QueueInfo queueInfo : queueInfoList) {
-                            System.out.println(queueInfo.getQueueName());
-                        }
-                        client.getApplicationReport(applicationId);
-                        System.out.println("client stopped");
-                    } catch (YarnException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } finally {
-                        client.stop();
-                    }
-                }
-        );
+        System.out.println("threadNum: " + threadNum);
+        System.out.println("waitTime: " + waitTime);
+        System.out.println("appId: " + ApplicationId.newInstance(clusterTimestamp, id));
 
+        final ApplicationId applicationId = ApplicationId.newInstance(clusterTimestamp, id);
+        ExecutorService es = Executors.newFixedThreadPool(threadNum);
+        YarnConfiguration conf = new YarnConfiguration();
+        YarnClient client = YarnClient.createYarnClient();
+        client.init(conf);
+        client.start();
+        List<QueueInfo> queueInfoList = client.getAllQueues();
+        System.out.println("get Queues size " + queueInfoList.size());
+        for (QueueInfo queueInfo : queueInfoList) {
+            System.out.println(queueInfo.getQueueName());
+        }
+        for (int i = 0; i < threadNum; ++i) {
+            es.submit(
+                    () -> {
+                        try {
+                            client.getApplicationReport(applicationId);
+                            System.out.println("get report");
+                        } catch (YarnException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            );
+        }
+
+        es.shutdownNow();
         try {
-            TimeUnit.SECONDS.sleep(10);
+            TimeUnit.SECONDS.sleep(waitTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        es.shutdownNow();
+        client.stop();
     }
 }
