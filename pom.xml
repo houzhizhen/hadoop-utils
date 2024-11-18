@@ -29,6 +29,8 @@
         <hadoop.version>3.2.3</hadoop.version>
         <hive.storage.version>2.7.0</hive.storage.version>
         <tez.version>0.10.1</tez.version>
+        <junit.version>4.11</junit.version>
+        <slf4j.version>1.7.25</slf4j.version>
     </properties>
 
     <dependencies>
@@ -81,6 +83,23 @@
             <groupId>org.fusesource.leveldbjni</groupId>
             <artifactId>leveldbjni-all</artifactId>
             <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>${slf4j.version}</version>
+        <!-- 注意，若无type为jar则报错-->
+        <type>jar</type>
         </dependency>
     </dependencies>
 
