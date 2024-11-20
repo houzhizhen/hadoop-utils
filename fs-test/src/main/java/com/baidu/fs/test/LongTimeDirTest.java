@@ -1,6 +1,5 @@
 package com.baidu.fs.test;
 
-import com.baidu.fs.parallel.PutAndList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -17,19 +16,18 @@ import java.util.concurrent.TimeUnit;
  * 每个目录操作 sleep 1 分钟，那么创建 100 个目录大约 sleep 100 分钟。
  */
 public class LongTimeDirTest {
-    public static final Log LOG = LogFactory.getLog(PutAndList.class);
-    private static final byte[] EMPTY_BYTES = new byte[1024];
+    public static final Log LOG = LogFactory.getLog(LongTimeDirTest.class);
 
     private final FileSystem fileSystem;
     private final Path[] subDirs;
     private final int loopTime;
-    private final int subdirCount = 60;
+    private static final int SUB_DIR_COUNT = 60;
 
     public LongTimeDirTest(FileSystem fileSystem, Path basePath, int loopTime) {
         this.fileSystem = fileSystem;
         this.loopTime = loopTime;
-        this.subDirs = new Path[subdirCount];
-        for (int i = 0; i < subdirCount; i++) {
+        this.subDirs = new Path[SUB_DIR_COUNT];
+        for (int i = 0; i < SUB_DIR_COUNT; i++) {
             this.subDirs[i] = new Path(basePath, "subdir_" + i);
         }
     }
@@ -42,18 +40,18 @@ public class LongTimeDirTest {
 
     }
     private void executeOneLoop() throws IOException {
-        for (int i = 0; i < this.subDirs.length; i++) {
-            LOG.info("mkdir dir " + this.subDirs[i]);
-            this.fileSystem.mkdirs(this.subDirs[i]);
+        for (Path subDir : this.subDirs) {
+            LOG.info("mkdir dir " + subDir);
+            this.fileSystem.mkdirs(subDir);
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e) {
                 // throw new RuntimeException(e);
             }
         }
-        for (int i = 0; i < this.subDirs.length; i++) {
-            LOG.info("delete dir " + this.subDirs[i]);
-            this.fileSystem.delete(this.subDirs[i], true);
+        for (Path subDir : this.subDirs) {
+            LOG.info("delete dir " + subDir);
+            this.fileSystem.delete(subDir, true);
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e) {
