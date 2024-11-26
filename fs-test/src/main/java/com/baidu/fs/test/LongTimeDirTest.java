@@ -3,6 +3,7 @@ package com.baidu.fs.test;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
@@ -42,7 +43,13 @@ public class LongTimeDirTest {
     private void executeOneLoop() throws IOException {
         for (Path subDir : this.subDirs) {
             LOG.info("mkdir dir " + subDir);
-            this.fileSystem.mkdirs(subDir);
+            boolean success = this.fileSystem.mkdirs(subDir);
+            if (success) {
+                FileStatus status = this.fileSystem.getFileStatus(subDir);
+                if (status == null) {
+                    throw new RuntimeException("Cannot find  created dir " + subDir);
+                }
+            }
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e) {
@@ -51,7 +58,13 @@ public class LongTimeDirTest {
         }
         for (Path subDir : this.subDirs) {
             LOG.info("delete dir " + subDir);
-            this.fileSystem.delete(subDir, true);
+            boolean success = this.fileSystem.delete(subDir, true);
+            if (success) {
+                FileStatus status = this.fileSystem.getFileStatus(subDir);
+                if (status != null) {
+                    throw new RuntimeException("Should not find deleted dir " + subDir);
+                }
+            }
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e) {

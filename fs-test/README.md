@@ -11,3 +11,10 @@ if [ -f conn.jar ]; then
 fi
 jar -cf conn.jar ./*
 hadoop jar conn.jar ConnectWithKerberosTest ${PRINCIPLE} ${KEYTAB_FILE_LOCATION}
+
+## RAW FS test
+### append
+```bash
+hadoop jar fs-test-*.jar com.baidu.fs.raw.RawFs append /tmp/a /etc/profile
+
+```
