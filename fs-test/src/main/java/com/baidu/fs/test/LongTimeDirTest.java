@@ -59,11 +59,8 @@ public class LongTimeDirTest {
         for (Path subDir : this.subDirs) {
             LOG.info("delete dir " + subDir);
             boolean success = this.fileSystem.delete(subDir, true);
-            if (success) {
-                FileStatus status = this.fileSystem.getFileStatus(subDir);
-                if (status != null) {
-                    throw new RuntimeException("Should not find deleted dir " + subDir);
-                }
+            if (! success) {
+               throw new RuntimeException("Cannot deleted dir " + subDir);
             }
             try {
                 TimeUnit.MINUTES.sleep(1);
