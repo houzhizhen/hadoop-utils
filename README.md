@@ -63,3 +63,11 @@ subdirNum：根地址下子目录的数量
 hadoop jar yarn-1.8.10.jar com.baidu.resourcemanager.TestGetApplicationReport
 ```
 
+## 4. Bos Conflict Test
+使用 Bos filesystem 作为 resourcemanager 的 store 的时候，抛出异常。
+path remainCount loopCount.
+
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.BosConflictTest path remainCount loopCount
+```
