@@ -71,3 +71,14 @@ path remainCount loopCount.
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.BosConflictTest path remainCount loopCount
 ```
+
+## MakeWarehouseDirs
+
+## FindTopDirectories
+找到一个目录下及其所有子目录中，文件对象最多的目录。
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.FindTopDirectories path topN
+
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.FindTopDirectories "file:///Users/houzhizhen/git/baidu/bce-bmr/hadoop" topN
+```

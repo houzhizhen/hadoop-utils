@@ -101,6 +101,11 @@
         <!-- 注意，若无type为jar则报错-->
         <type>jar</type>
         </dependency>
+        <dependency>
+        <groupId>com.baidubce</groupId>
+            <artifactId>bos-hadoop-fs</artifactId>
+            <version>bmr-202502261145</version>
+        </dependency>
     </dependencies>
 
     <build>

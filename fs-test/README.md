@@ -18,3 +18,10 @@ hadoop jar conn.jar ConnectWithKerberosTest ${PRINCIPLE} ${KEYTAB_FILE_LOCATION}
 hadoop jar fs-test-*.jar com.baidu.fs.raw.RawFs append /tmp/a /etc/profile
 
 ```
+
+## Deduplicate
+### append
+```bash
+hadoop jar fs-test-*.jar com.baidu.fs.util.Deduplicate -d 
+
+```
