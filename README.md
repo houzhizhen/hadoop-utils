@@ -79,6 +79,20 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.BosConflictTest path remainCou
 
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.FindTopDirectories path topN
+```
+如
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.FindTopDirectories --root-dir file:///Users/houzhizhen/git/baidu/bce-bmr/hadoop --top-num 10
+```
 
-hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.FindTopDirectories "file:///Users/houzhizhen/git/baidu/bce-bmr/hadoop" topN
+## TestManyDirsInDirectory
+创建在指定目录下创建 指定个子目录
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.CreateSubDirsInDirectory path number-of-subdirectories
+```
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.CreateSubDirsInDirectory file:///Users/houzhizhen/git/hadoop-utils/fs-test/target 10 
+如创建 1000000 个子目录， 每创建 10000 个打印下时间。
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.CreateSubDirsInDirectory hdfs://bmr-cluster/user/hive/warehouse/test/ 1000000 10000
 ```
