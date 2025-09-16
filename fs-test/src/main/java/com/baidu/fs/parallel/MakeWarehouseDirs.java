@@ -15,6 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Usage:
+ * hadoop jar
+ */
 public class MakeWarehouseDirs {
 
     public static final Log LOG = LogFactory.getLog(MakeWarehouseDirs.class);
@@ -79,6 +83,7 @@ public class MakeWarehouseDirs {
             fs.delete(basePath, true);
         }
         fs.mkdirs(basePath);
+        long beginTime = System.currentTimeMillis();
         try {
 
             if (countPerLevel.length <= 1) {
@@ -108,6 +113,8 @@ public class MakeWarehouseDirs {
         } finally {
             fs.close();
         }
+        long timeSpend = System.currentTimeMillis() - beginTime;
+        LOG.info("Time used: " + timeSpend +" ms");
     }
 
     private static void printUsage() {
