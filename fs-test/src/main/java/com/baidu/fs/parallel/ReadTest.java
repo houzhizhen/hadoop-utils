@@ -6,9 +6,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 import java.net.URI;
+import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -17,20 +20,38 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ReadTest {
 public static final Log LOG = LogFactory.getLog(ReadTest.class);
 
-private final FileSystem fileSystem;
+private final Configuration conf;
+private FileSystem fileSystem;
 private final int []countPerLevel;
 
 private Path level0Path;
+private boolean useSeparateConnPerThread;
 
-public ReadTest(FileSystem fileSystem, Path parentPath, int level0Index, int []countPerLevel) {
-    this.fileSystem = fileSystem;
+public ReadTest(Configuration conf, Path parentPath, int level0Index, int []countPerLevel) {
+    this.conf = conf;
+    this.useSeparateConnPerThread = conf.getBoolean("dfs.read-test.use.seperate.conn", false);
     this.countPerLevel = countPerLevel;
     this.level0Path = new Path(parentPath, "l" + level0Index);
 }
 
 public void run() throws IOException {
-    this.fileSystem.mkdirs(level0Path);
-    read(countPerLevel, 1, level0Path);
+    try {
+        if (this.useSeparateConnPerThread) {
+            UserGroupInformation ugi = UserGroupInformation.createRemoteUser("testuser" + level0Path.getName());
+            fileSystem = ugi.doAs((PrivilegedExceptionAction<FileSystem>) () -> FileSystem.get(level0Path.toUri(), conf));
+        } else {
+            fileSystem = FileSystem.get(level0Path.toUri(), conf);
+        }
+
+        read(countPerLevel, 1, level0Path);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+    } finally {
+        if (this.useSeparateConnPerThread) {
+            fileSystem.close();
+        }
+    }
+
 }
 
 
@@ -60,7 +81,7 @@ public static void main(String[] args) throws IOException {
         args[0]));
 
     URI uri = URI.create(args[0]);
-    Path basePath = new Path(uri.getPath());
+    Path basePath = new Path(args[0]);
     int level = args.length - 1;
     int[] countPerLevel = new int[level];
     for (int i = 0; i < countPerLevel.length; i++) {
@@ -73,13 +94,14 @@ public static void main(String[] args) throws IOException {
     try {
 
         if (countPerLevel.length <= 1) {
-            ReadTest readTest = new ReadTest(fs, basePath, 0, countPerLevel);
-            readTest.read(countPerLevel, 0, basePath);
+            ReadTest readTest = new ReadTest(conf, basePath, 0, countPerLevel);
+            readTest.run();
         } else {
             ExecutorService es = Executors.newFixedThreadPool(countPerLevel[0]);
             AtomicBoolean stopped = new AtomicBoolean();
             for (int i = 0; i < countPerLevel[0]; i++) {
-                ReadTest readTest = new ReadTest(fs, basePath, i, countPerLevel);
+
+                ReadTest readTest = new ReadTest(conf, basePath, i, countPerLevel);
                 es.submit(() -> {
                     try {
                         readTest.run();
