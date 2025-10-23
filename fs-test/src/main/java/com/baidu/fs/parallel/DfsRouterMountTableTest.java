@@ -55,7 +55,10 @@ public int run(String[] args) throws Exception {
     this.admin = new RouterAdmin(conf);
     this.fs = FileSystem.get(conf);
     if (fs.exists(basePath)) {
+        long beginTime = System.currentTimeMillis();
         recursive(basePath);
+        long timeUsed = System.currentTimeMillis() - beginTime;
+        System.out.println(operator + " used " + timeUsed + " ms");
         return 0;
     } else {
         System.err.println("Basedir " + basePath + " does not exist");

@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
@@ -16,25 +15,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class WriteTest {
+import static com.baidu.fs.distributed.DistributedReadTest.BASE_DIR;
 
-public static final Log LOG = LogFactory.getLog(WriteTest.class);
+public class GetFileInfoTest {
+public static final Log LOG = LogFactory.getLog(GetFileInfoTest.class);
+
 private final Configuration conf;
 private FileSystem fileSystem;
 private final int []countPerLevel;
 
 private Path level0Path;
 private boolean useSeparateConnPerThread;
+private final Path baseDir;
 
-public WriteTest(Configuration conf, Path parentPath, int level0Index, int []countPerLevel) {
+public GetFileInfoTest(Configuration conf, Path parentPath, int level0Index, int []countPerLevel) {
     this.conf = conf;
     this.useSeparateConnPerThread = conf.getBoolean("dfs.read-test.use.seperate.conn", false);
     this.countPerLevel = countPerLevel;
     this.level0Path = new Path(parentPath, "l" + level0Index);
+    this.baseDir = new Path(conf.get(BASE_DIR, "/tmp"));
 }
 
 public void run() throws IOException {
-    this.fileSystem.mkdirs(level0Path);
     try {
         if (this.useSeparateConnPerThread) {
             UserGroupInformation ugi = UserGroupInformation.createRemoteUser("testuser" + level0Path.getName());
@@ -43,7 +45,7 @@ public void run() throws IOException {
             fileSystem = FileSystem.get(level0Path.toUri(), conf);
         }
 
-        create(countPerLevel, 1, level0Path);
+        read(countPerLevel, 1, level0Path);
     } catch (InterruptedException e) {
         throw new RuntimeException(e);
     } finally {
@@ -52,27 +54,29 @@ public void run() throws IOException {
         }
     }
 
-
 }
 
 
-public void create(int []countPerLevel, int level, Path parentPath) throws IOException {
+public void read(int []countPerLevel, int level, Path parentPath) throws IOException {
     if (level == countPerLevel.length - 1) {
         for (int lastIndex = 0; lastIndex < countPerLevel[level]; lastIndex++) {
-            Path path = new Path(parentPath, "d" + lastIndex);
-            this.fileSystem.mkdirs(path);
+            // Path filePath = new Path(parentPath, "d" + lastIndex);
+            this.fileSystem.getFileStatus(baseDir);
         }
     } else {
         for (int index = 0; index < countPerLevel[level]; index++) {
             Path path = new Path(parentPath, "d" + index);
-            this.fileSystem.mkdirs(path);
-            create(countPerLevel, level + 1, path);
+            // this.fileSystem.getFileStatus(path);
+            read(countPerLevel, level + 1, path);
         }
     }
 
 }
 
 public static void main(String[] args) throws IOException {
+    run(new Configuration(), args);
+}
+public static void run(Configuration conf, String[] args) throws IOException {
     if(args.length < 1) {
         printUsage();
         System.exit(1);
@@ -89,27 +93,22 @@ public static void main(String[] args) throws IOException {
         countPerLevel[i] = Integer.parseInt(args[i+1]);
     }
 
-    Configuration conf = new HdfsConfiguration();
     FileSystem fs = FileSystem.get(uri, conf);
-    if (fs.exists(basePath)) {
-        LOG.info("Path " + basePath + " exist, deleting");
-        fs.delete(basePath, true);
-    }
-    fs.mkdirs(basePath);
     long beginTime = System.currentTimeMillis();
     try {
 
         if (countPerLevel.length <= 1) {
-            MakeDirAndFile makeDirAndFile = new MakeDirAndFile(fs, basePath, 0, countPerLevel);
-            makeDirAndFile.run();
+            GetFileInfoTest GetFileInfoTest = new GetFileInfoTest(conf, basePath, 0, countPerLevel);
+            GetFileInfoTest.run();
         } else {
             ExecutorService es = Executors.newFixedThreadPool(countPerLevel[0]);
             AtomicBoolean stopped = new AtomicBoolean();
             for (int i = 0; i < countPerLevel[0]; i++) {
-                MakeDirAndFile makeDirAndFile = new MakeDirAndFile(fs, basePath, i, countPerLevel);
+
+                GetFileInfoTest GetFileInfoTest = new GetFileInfoTest(conf, basePath, i, countPerLevel);
                 es.submit(() -> {
                     try {
-                        makeDirAndFile.run();
+                        GetFileInfoTest.run();
                     } catch (IOException e) {
                         stopped.set(true);
                         e.printStackTrace();
@@ -130,7 +129,9 @@ public static void main(String[] args) throws IOException {
     LOG.info("Time used: " + timeSpend +" ms");
 }
 
+
+
 private static void printUsage() {
-    LOG.info("Usage: MakeWarehouseDirs level0DirNum, level1DirNum, ... , levelNFileNum");
+    LOG.info("Usage: GetFileInfoTest level0DirNum, level1DirNum, ... , levelNFileNum");
 }
 }

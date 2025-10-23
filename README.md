@@ -72,7 +72,16 @@ path remainCount loopCount.
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.BosConflictTest path remainCount loopCount
 ```
 
-## MakeWarehouseDirs
+## MakeDirAndFile
+多线程执行创建目录和文件
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile baseDir iteratorTime threadNum fileNumPerDir fileLength level0DirNum, ... , levelNFileNum
+## eg, 以下命令 以 /tmp/test 作为基准目录，迭代2次，每次的迭代目录为 /tmp/test/d[0-1]。每次迭代使用 3 个线程，每个线程以 /tmp/test/d[0-1]/d[0-2] 作为基准目录。4 每个目录文件的个数, 5是文件的长度;6，7 是每个线程创建的目录.
+总共创建 2 * 3 * 4 * 6 * 7  = 1008 个文件。2 * 3 * 6 * 7  = 1008 个文件。
+
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile /tmp/test 2 3 4 5 6 7
+```
 
 ## FindTopDirectories
 找到一个目录下及其所有子目录中，文件对象最多的目录。
@@ -95,4 +104,9 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.CreateSubDirsInDirectory file:
 如创建 1000000 个子目录， 每创建 10000 个打印下时间。
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.CreateSubDirsInDirectory hdfs://bmr-cluster/user/hive/warehouse/test/ 1000000 10000
+```
+
+## DistributedReadTest
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedReadTest -maps 1 -baseDir /tmp/ -parameters '/data/fs-test,1,100,100'
 ```
