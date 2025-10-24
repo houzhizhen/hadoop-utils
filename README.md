@@ -76,11 +76,12 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.BosConflictTest path remainCou
 多线程执行创建目录和文件
 
 ```bash
-hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile baseDir iteratorTime threadNum fileNumPerDir fileLength level0DirNum, ... , levelNFileNum
 ## eg, 以下命令 以 /tmp/test 作为基准目录，迭代2次，每次的迭代目录为 /tmp/test/d[0-1]。每次迭代使用 3 个线程，每个线程以 /tmp/test/d[0-1]/d[0-2] 作为基准目录。4 每个目录文件的个数, 5是文件的长度;6，7 是每个线程创建的目录.
 总共创建 2 * 3 * 4 * 6 * 7  = 1008 个文件。2 * 3 * 6 * 7  = 1008 个文件。
 
-hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile /tmp/test 2 3 4 5 6 7
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile --base-path /tmp/test --iterator-time 2 --iterator-start-index 0 --thread-num 3 --file-per-dir 4 --file-length  5 --dirs-per-level 6,7
+
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile --base-path /tmp/test --iterator-time 1000 --iterator-start-index 0 --thread-num 3 --file-per-dir 4 --file-length  5 --dirs-per-level 6,7
 ```
 
 ## FindTopDirectories

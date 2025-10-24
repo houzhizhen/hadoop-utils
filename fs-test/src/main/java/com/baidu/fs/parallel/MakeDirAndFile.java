@@ -99,10 +99,6 @@ public class MakeDirAndFile {
 
         Configuration conf = new HdfsConfiguration();
         FileSystem fs = FileSystem.get(uri, conf);
-        if (fs.exists(basePath)) {
-            LOG.info("Path " + basePath + " exist, deleting");
-            fs.delete(basePath, true);
-        }
         fs.mkdirs(basePath);
         long beginTime = System.currentTimeMillis();
         long createdFileNum = 0L;
