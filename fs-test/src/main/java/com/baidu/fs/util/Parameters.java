@@ -33,8 +33,24 @@ public String[] getArray(String key) {
     return value.split(",");
 }
 
+public String[] getArray(String key, String defValue) {
+    String value = paraMap.get(key);
+    if (value == null) {
+        return defValue.split(",");
+    }
+    return value.split(",");
+}
+
 public int[] getIntArray(String key) {
     String[] strings = getArray(key);
+    int[] array = new int[strings.length];
+    for (int i=0; i < strings.length; i++) {
+        array[i] = Integer.parseInt(strings[i]);
+    }
+    return array;
+}
+public int[] getIntArray(String key, String defaultValue) {
+    String[] strings = getArray(key, defaultValue);
     int[] array = new int[strings.length];
     for (int i=0; i < strings.length; i++) {
         array[i] = Integer.parseInt(strings[i]);

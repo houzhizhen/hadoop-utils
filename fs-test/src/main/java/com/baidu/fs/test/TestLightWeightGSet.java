@@ -1,13 +1,11 @@
 package com.baidu.fs.test;
 
+import com.baidu.fs.util.JvmUtils;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoContiguous;
 import org.apache.hadoop.util.LightWeightGSet;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.util.List;
 
 public class TestLightWeightGSet {
     public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
@@ -28,12 +26,12 @@ public class TestLightWeightGSet {
 
             long printInterval = n / 10;
             for (long i = 0; i < n; i += printInterval) {
-                long startGcTime = getCurrentGcTime();
+                long startGcTime = JvmUtils.getCurrentGcTime();
                 long beginTime = System.currentTimeMillis();
                 insertBatch(i, i+printInterval, blockSet);
 
                 long endTime = System.currentTimeMillis();
-                long endGcTime = getCurrentGcTime();
+                long endGcTime = JvmUtils.getCurrentGcTime();
                 long gcTime = endGcTime - startGcTime;
                 long timeUsed = endTime - beginTime;
                 long timeWithoutGc = timeUsed - (endGcTime - startGcTime);
@@ -50,17 +48,6 @@ public class TestLightWeightGSet {
             BlockInfo blockInfo = new BlockInfoContiguous(block, (short) 3);
             blockSet.put(blockInfo);
         }
-    }
-
-    public static long getCurrentGcTime() {
-        List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
-
-        long totalGcTime = 0L;
-        for (GarbageCollectorMXBean bean : gcBeans) {
-
-            totalGcTime += bean.getCollectionTime();
-        }
-        return totalGcTime;
     }
 
 }
