@@ -99,4 +99,11 @@ public static void main(String[] args) {
 }
 
 
+public long getLong(String key) {
+    String value = paraMap.get(key);
+    if (value == null) {
+        throw new RuntimeException("Not has parameter " + key);
+    }
+    return Long.parseLong(value);
+}
 }

@@ -17,10 +17,10 @@ public class DeleteDirAndFileBaseOnModifyTime {
     private final Path rootDir;
     private final long timeLimitInMillions;
 
-    public DeleteDirAndFileBaseOnModifyTime(boolean dryRun, String rootDir, int days) {
+    public DeleteDirAndFileBaseOnModifyTime(boolean dryRun, String rootDir, int hours) {
         this.dryRun = dryRun;
         this.rootDir = new Path(rootDir);
-        this.timeLimitInMillions = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L;
+        this.timeLimitInMillions = System.currentTimeMillis() - hours * 60 * 60 * 1000L;
     }
 
     public void execute() throws IOException {
@@ -96,6 +96,12 @@ public class DeleteDirAndFileBaseOnModifyTime {
                                  .hasArg()
                                  .create('d'));
 
+        result.addOption(OptionBuilder
+            .withLongOpt("hours")
+            .withDescription("only delete dirs created hours before")
+            .hasArg()
+            .create('h'));
+
         return result;
     }
 
@@ -112,13 +118,18 @@ public class DeleteDirAndFileBaseOnModifyTime {
             throw new RuntimeException("You must specify dir-to-delete");
         }
 
-        int days;
-        if (cli.hasOption("d")) {
-            days = Integer.parseInt(cli.getOptionValue("d"));
+        int hours;
+        if (cli.hasOption("h")) {
+            hours = Integer.parseInt(cli.getOptionValue("h"));
         } else {
-            throw new RuntimeException("You must specify days the file created before today");
+            if (cli.hasOption("d")) {
+                hours = Integer.parseInt(cli.getOptionValue("d")) * 24;
+            } else {
+                throw new RuntimeException("You must specify days the file created before today");
+            }
         }
-        DeleteDirAndFileBaseOnModifyTime task = new DeleteDirAndFileBaseOnModifyTime(dryRun, rootDir, days);
+        System.out.println("hours=" + hours);
+        DeleteDirAndFileBaseOnModifyTime task = new DeleteDirAndFileBaseOnModifyTime(dryRun, rootDir, hours);
         task.execute();
     }
 }

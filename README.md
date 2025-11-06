@@ -94,13 +94,15 @@ nohup hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.FilePerformanceTest \
   --iterator-time 75 > FilePerformanceTest.log 2>&1 &
 
 
-export HADOOP_CLIENT_OPTS="-Xmx5g -Xms5g -Xmn1g"
-nohup hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.FilePerformanceTest \
-  --base-dr /mnt/tmpfs/FilePerformanceTest \
-  --dir-num-per-level 256,256 \
-  --iterator-time 1024 > memoryFilePerformanceTest.log 2>&1 &
+
 ```
-4915200
+## TestLightWeightResizableGSet
+```bash
+export HADOOP_CLIENT_OPTS="-Xmx500g -Xms500g -Xmn5g"
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.test.TestLightWeightResizableGSet 100000000
+
+```
+
 ## FindTopDirectories
 找到一个目录下及其所有子目录中，文件对象最多的目录。
 
@@ -127,4 +129,10 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.CreateSubDirsInDirectory hdfs:
 ## DistributedReadTest
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedReadTest -maps 1 -baseDir /tmp/ -parameters '/data/fs-test,1,100,100'
+```
+
+## DeleteDirAndFileBaseOnModifyTime
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.util.DeleteDirAndFileBaseOnModifyTime --dir-to-delete 'file:///Users/houzhizhen/git/hadoop-utils/fs-test/target' --hours 1
 ```
