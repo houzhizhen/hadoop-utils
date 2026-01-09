@@ -8,12 +8,11 @@ import org.apache.hadoop.hdfs.HdfsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class List {
+public class ListTest {
 
     public static void main(String[] args) throws IOException {
         if(args.length != 4) {
@@ -37,7 +36,7 @@ public class List {
                     for (int j = 0; j < iterationTimes && !stopped.get(); j++) {
                         FileStatus[] statuses = fs.listStatus(path);
                         if (statuses.length != expectedCount) {
-                            synchronized (List.class) {
+                            synchronized (ListTest.class) {
                                 System.err.println(String.format("Thread %s get %s files",
                                                                  Thread.currentThread().getId(),
                                                                  statuses.length));

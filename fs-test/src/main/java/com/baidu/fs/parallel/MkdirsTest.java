@@ -16,9 +16,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class WriteTest {
+public class MkdirsTest {
 
-public static final Log LOG = LogFactory.getLog(WriteTest.class);
+public static final Log LOG = LogFactory.getLog(MkdirsTest.class);
 private final Configuration conf;
 private FileSystem fileSystem;
 private final int []countPerLevel;
@@ -26,7 +26,7 @@ private final int []countPerLevel;
 private Path level0Path;
 private boolean useSeparateConnPerThread;
 
-public WriteTest(Configuration conf, Path parentPath, int level0Index, int []countPerLevel) {
+public MkdirsTest(Configuration conf, Path parentPath, int level0Index, int []countPerLevel) {
     this.conf = conf;
     this.useSeparateConnPerThread = conf.getBoolean("dfs.read-test.use.seperate.conn", false);
     this.countPerLevel = countPerLevel;
@@ -98,20 +98,20 @@ public static void main(String[] args) throws IOException {
     fs.mkdirs(basePath);
     long beginTime = System.currentTimeMillis();
     try {
-
+        AtomicBoolean stop = new AtomicBoolean();
         if (countPerLevel.length <= 1) {
-            MakeDirAndFile makeDirAndFile = new MakeDirAndFile(fs, basePath, 0, countPerLevel);
+            MakeDirAndFile makeDirAndFile = new MakeDirAndFile(fs, basePath, 0, countPerLevel, 0, stop);
             makeDirAndFile.run();
         } else {
             ExecutorService es = Executors.newFixedThreadPool(countPerLevel[0]);
-            AtomicBoolean stopped = new AtomicBoolean();
+
             for (int i = 0; i < countPerLevel[0]; i++) {
-                MakeDirAndFile makeDirAndFile = new MakeDirAndFile(fs, basePath, i, countPerLevel);
+                MakeDirAndFile makeDirAndFile = new MakeDirAndFile(fs, basePath, i, countPerLevel, 0, stop);
                 es.submit(() -> {
                     try {
                         makeDirAndFile.run();
                     } catch (IOException e) {
-                        stopped.set(true);
+                        stop.set(true);
                         e.printStackTrace();
                     }
                 });

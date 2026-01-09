@@ -69,7 +69,7 @@ public class PutAndGetBlockLocations {
             FileStatus[] statuses = this.fileSystem.listStatus(path);
             if (statuses.length != this.fileNum) {
                 stopped.set(true);
-                synchronized (com.baidu.fs.parallel.List.class) {
+                synchronized (ListTest.class) {
                     LOG.error(String.format("Thread %s get %s files",
                             this.threadId, statuses.length));
                     for (FileStatus status : statuses) {

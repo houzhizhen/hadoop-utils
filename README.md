@@ -79,10 +79,13 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.BosConflictTest path remainCou
 以下命令 以 /tmp/test 作为基准目录，迭代2次，每次的迭代目录为 /tmp/test/d[0-1]。每次迭代使用 3 个线程，每个线程以 /tmp/test/d[0-1]/d[0-2] 作为基准目录。4 每个目录文件的个数, 5是文件的长度;6，7 是每个线程创建的目录.
 总共创建 2 * 3 * 4 * 6 * 7  = 1008 个文件。2 * 3 * 6 * 7  = 1008 个文件。
 ```bash
-hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile --base-path /tmp/test --iterator-time 2 --iterator-start-index 0 --thread-num 3 --file-per-dir 4 --file-length  5 --dirs-per-level 6,7
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile --base-path /tmp/test --iterator-time 2 --iterator-start-index 0 --thread-num 10 --file-per-dir 100 --file-length  0 --dirs-per-level 100,100
 
 ```
-
+多线程写文件测试。线程数：128，每个线程写10G文件。
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile  --base-path /tmp/test --iterator-time 1 --iterator-start-index 0 --thread-num 128 --file-per-dir 2 --file-length  10737418240 --dirs-per-level 1
+```
 ## FilePerformanceTest
 
 
@@ -135,4 +138,17 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedReadTest -ma
 
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.util.DeleteDirAndFileBaseOnModifyTime --dir-to-delete 'file:///Users/houzhizhen/git/hadoop-utils/fs-test/target' --hours 1
+```
+
+## EcReadWriteTest
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.ec.EcReadWriteTest --paths "/Users/houzhizhen/ec/a/a,/Users/houzhizhen/ec/b/b" --file-length 1073741824
+```
+
+
+## ParallelSlowReader
+
+```bash
+hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelSlowReader --parallel 15000 --path /benchmarks/TestDFSIO/io_data --bytesPerSecond 4096 --createThreadPerSecond 256
 ```

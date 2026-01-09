@@ -37,7 +37,7 @@ public static void main(String[] args) throws IOException {
         fs.delete(basePath, true);
     }
     fs.mkdirs(basePath);
-    WriteTest.main(args);
+    MkdirsTest.main(args);
     ReadTest.main(args);
 }
 

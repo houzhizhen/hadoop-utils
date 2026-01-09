@@ -6,6 +6,26 @@ import java.util.Map;
 public class Parameters {
 private Map<String, String> paraMap = new HashMap<>();
 
+private Parameters(Map<String, String> paraMap) {
+    this.paraMap = paraMap;
+}
+
+public static Parameters get(String[] args) {
+    Map<String, String> paraMap = new HashMap<>();
+    for (int i = 0; i < args.length; i++) {
+        if (args[i].startsWith("--")) {
+            String parameterName = args[i].substring(2);
+            String parameterValue = "";
+            // next is not parameter name
+            if (i < args.length - 1 && !args[i+1].startsWith("--")) {
+                parameterValue = args[i+1];
+                i++;
+            }
+            paraMap.put(parameterName, parameterValue);
+        }
+    }
+    return new Parameters(paraMap);
+}
 public Parameters(String[] args) {
     for (int i = 0; i < args.length; i++) {
         if (args[i].startsWith("--")) {
