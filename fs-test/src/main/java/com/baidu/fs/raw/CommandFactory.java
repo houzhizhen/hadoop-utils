@@ -14,6 +14,7 @@ public class CommandFactory {
         commandMap.put(MV.NAME.toLowerCase(), MV.class);
         commandMap.put(MakeDirs.NAME.toLowerCase(), MakeDirs.class);
         commandMap.put(Append.NAME.toLowerCase(), Append.class);
+        commandMap.put(Append.NAME.toLowerCase(), Append.class);
     }
 
     public static Command getCommand(Configuration conf, String name) {

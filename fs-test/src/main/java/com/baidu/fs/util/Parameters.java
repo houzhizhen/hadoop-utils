@@ -126,4 +126,11 @@ public long getLong(String key) {
     }
     return Long.parseLong(value);
 }
+public long getLong(String key, long defaultValue) {
+    String value = paraMap.get(key);
+    if (value == null) {
+        return defaultValue;
+    }
+    return Long.parseLong(value);
+}
 }

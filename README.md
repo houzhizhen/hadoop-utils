@@ -42,8 +42,9 @@ subdirNum：每个线程子目录的数量
 fileNum：每个子目录下文件的数量。
 iterationTimes：读取的迭代次数
 ```
-## 3. MakeDirs
-
+## 3. LongTimeDirTest
+长时间 Dir 测试，每轮创建100个目录，然后删除这100个目录。
+每个目录操作 sleep 1 分钟，那么创建 100 个目录大约 sleep 100 分钟。
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.LongTimeDirTest basePath subdirNum
 ```
@@ -151,4 +152,9 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.test.ec.EcReadWriteTest --paths "/U
 
 ```bash
 hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelSlowReader --parallel 15000 --path /benchmarks/TestDFSIO/io_data --bytesPerSecond 4096 --createThreadPerSecond 256
+```
+## ParallelTailTest
+```bash
+exort HADOOP_HEAPSIZE=20g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelTailTest --path bos://bmr-rd-wh/test/test-tail --parallel 100 --printInterval 1000 --seekNum 100
 ```
