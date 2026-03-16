@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Parameters {
+
 private Map<String, String> paraMap = new HashMap<>();
 
 private Parameters(Map<String, String> paraMap) {

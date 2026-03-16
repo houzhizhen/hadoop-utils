@@ -11,13 +11,19 @@ import java.util.concurrent.TimeUnit;
 
 public class ParallelReadWriteByPercent {
 
+public static final String PARALLEL = "parallel";
+public static final String BASE_PATH = "basePath";
 public static void main(String[] args) throws IOException, InterruptedException {
     Parameters parameters = Parameters.get(args);
-    int parallel = parameters.getInt("parallel");
+    run(parameters);
+
+}
+public static void run(Parameters parameters) throws InterruptedException, IOException {
+    int parallel = parameters.getInt(PARALLEL);
     double readPercent = parameters.getDouble("readPercent", 0.0);
     int readParallel = (int) (parallel * readPercent);
     int writeParallel = parallel - readParallel;
-    Path basePath = new Path(parameters.get("basePath"));
+    Path basePath = new Path(parameters.get(BASE_PATH));
     System.out.println("readParallel:" + readParallel);
     System.out.println("writeParallel:" + writeParallel);
     System.out.println("basePath:" + basePath);
