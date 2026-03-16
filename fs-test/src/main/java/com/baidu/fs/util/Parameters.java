@@ -83,6 +83,11 @@ public String get(String key, String defaultValue) {
     return value == null ?  defaultValue : value;
 }
 
+public double getDouble(String key, double defaultValue) {
+    String value = paraMap.get(key);
+    return value == null ? defaultValue : Double.parseDouble(value);
+}
+
 public int getInt(String key, int defaultValue) {
     String value = paraMap.get(key);
     return value == null ? defaultValue : Integer.parseInt(value);
@@ -96,8 +101,18 @@ public int getInt(String key) {
     return Integer.parseInt(value);
 }
 
+public String set(String key, String value) {
+    return this.paraMap.put(key, value);
+}
+
 public boolean has(String key) {
     return paraMap.keySet().contains(key);
+}
+
+public Parameters(Parameters parameters) {
+    for (Map.Entry<String, String> entry: parameters.paraMap.entrySet()) {
+        paraMap.put(entry.getKey(), entry.getValue());
+    }
 }
 
 public static void main(String[] args) {

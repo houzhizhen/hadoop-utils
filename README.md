@@ -158,3 +158,20 @@ hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelSlowReader --paral
 exort HADOOP_HEAPSIZE=20g
 hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelTailTest --path bos://bmr-rd-wh/test/test-tail --parallel 100 --printInterval 1000 --seekNum 100
 ```
+## ParallelWriteTest
+```bash
+exort HADOOP_HEAPSIZE=2g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelWriteTest --basePath hdfs://localhost:8020/test/parallel-write --parallel 10 --filesize 10240 --fileNumPerThread 10
+```
+
+## ParallelReadTest
+```bash
+exort HADOOP_HEAPSIZE=2g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadTest --basePath hdfs://localhost:8020/test/parallel-read --parallel 10 --filesize 10240 --fileNumPerThread 10
+```
+## ParallelReadWriteByPercent
+```bash
+exort HADOOP_HEAPSIZE=2g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath hdfs://localhost:8020/test/parallel --parallel 10 --readPercent 0 --filesize 10240 --fileNumPerThread 10
+```
+
