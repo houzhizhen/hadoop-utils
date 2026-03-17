@@ -18,7 +18,7 @@ public static Parameters get(String[] args) {
             String parameterName = args[i].substring(2);
             String parameterValue = "";
             // next is not parameter name
-            if (i < args.length - 1 && !args[i+1].startsWith("--")) {
+            if (i+1 < args.length) {
                 parameterValue = args[i+1];
                 i++;
             }
@@ -148,5 +148,10 @@ public long getLong(String key, long defaultValue) {
         return defaultValue;
     }
     return Long.parseLong(value);
+}
+
+@Override
+public String toString() {
+    return paraMap.toString();
 }
 }

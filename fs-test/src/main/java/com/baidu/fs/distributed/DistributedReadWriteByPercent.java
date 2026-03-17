@@ -196,7 +196,9 @@ public class DistributedReadWriteByPercent {
     private void runTests() throws IOException, InterruptedException, ClassNotFoundException {
 
         Job job = Job.getInstance(conf, "Distributed ReadWrite Test By Percent");
-
+        job.setMapSpeculativeExecution(false);
+        job.getConfiguration().set("mapreduce.task.timeout", "6000000");
+        job.getConfiguration().set("mapreduce.task.stuck.timeout-ms", "6000000");
         job.setJarByClass(DistributedReadWriteByPercent.class);
         job.setMapperClass(ReadWriteTestMapper.class);
         job.setNumReduceTasks(0);
