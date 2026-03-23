@@ -175,7 +175,17 @@ exort HADOOP_HEAPSIZE=2g
 hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath hdfs://localhost:8020/test/parallel --parallel 10 --readPercent 0 --filesize 10240 --fileNumPerThread 10
 ```
 
+```bash
+exort HADOOP_HEAPSIZE=2g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath file:///ssd1/hdfs/data/temp --parallel 10 --readPercent 0 --filesize 10240 --fileNumPerThread 10
+```
+## DistributedReadWriteByPercent
+
+```java
  hadoop jar fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedReadWriteByPercent \
- -maps 10 \
- -baseDir hdfs://bjdd-sys-rpm27-7e2c1.bjdd.baidu.com:8020/tmp/distributed_test \
- -parameters "--parallel 200 --readPercent 0 --basePath hdfs://bjdd-sys-rpm27-7e2c1.bjdd.baidu.com:8020/tmp/test_data --filesize 10240 --fileNumPerThread 100"
+ --maps 10 \
+ --sleepTime 1000 \
+ --baseDir hdfs://localhost:8020/tmp/distributed_test \
+ --parameters "--parallel 2 --readPercent 0 --filesize 10240 --fileNumPerThread 10"
+```
+

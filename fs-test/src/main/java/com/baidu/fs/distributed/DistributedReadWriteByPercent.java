@@ -46,7 +46,6 @@ public class DistributedReadWriteByPercent {
     private static final String CONTROL_DIR_NAME = "control";
     private static final String OUTPUT_DIR_NAME = "output";
     private static final String PARAMETERS = "test.parameters";
-    public static final String BASE_DIR = "test.basedir";
     private static final String START_TIME = "test.starttime";
 
     private final Configuration conf = new Configuration();
@@ -73,11 +72,12 @@ public class DistributedReadWriteByPercent {
             setup(context);
             try {
                 Configuration conf = context.getConfiguration();
+                String basePath = conf.get("baseDir");
                 String[] args = conf.get(PARAMETERS).split(" ");
                 Parameters p = Parameters.get(args);
                 barrier(conf);
                 long beginTime = System.currentTimeMillis();
-                p.set(ParallelReadWriteByPercent.BASE_PATH, new Path(new Path(p.get(ParallelReadWriteByPercent.BASE_PATH)),
+                p.set(ParallelReadWriteByPercent.BASE_PATH, new Path(new Path(basePath),
                     "map-" + context.getTaskAttemptID().getTaskID()).toString());
                 ParallelReadWriteByPercent.run(p);
                 long endTime = System.currentTimeMillis();
@@ -176,15 +176,18 @@ public class DistributedReadWriteByPercent {
 
     private int numberOfMaps = 1;
     private String baseDir = "/tmp";
+    private Parameters paras;
 
     private void parseInputs(String[] args) {
-        Parameters paras = Parameters.get(args);
+        paras = Parameters.get(args);
         numberOfMaps = paras.getInt("maps", 10);
         baseDir = paras.get("baseDir");
         String parameters = paras.get("parameters");
         long sleepTime = paras.getLong("sleepTime", 1000);
+        conf.set("maps", String.valueOf(numberOfMaps));
         conf.set(PARAMETERS, parameters);
         conf.set(START_TIME, String.valueOf(System.currentTimeMillis() + sleepTime));
+        conf.set("baseDir", baseDir);
         LOG.info("numberOfMaps = {}", numberOfMaps);
         LOG.info("baseDir = {}", baseDir);
         LOG.info("parameters = {}", parameters);
@@ -202,9 +205,19 @@ public class DistributedReadWriteByPercent {
         job.setJarByClass(DistributedReadWriteByPercent.class);
         job.setMapperClass(ReadWriteTestMapper.class);
         job.setNumReduceTasks(0);
+        job.setMaxMapAttempts(1);
         FileInputFormat.addInputPath(job, new Path(baseDir, CONTROL_DIR_NAME));
         FileOutputFormat.setOutputPath(job, new Path(baseDir, OUTPUT_DIR_NAME));
         job.waitForCompletion(true);
+        long timeUsed = job.getCounters().findCounter(DistributedReadWriteByPercentCounter.TimeUSED).getValue();
+        int maps = conf.getInt("maps", 10);
+        String[] args = conf.get(PARAMETERS).split(" ");
+        Parameters p = Parameters.get(args);
+        int parallel = p.getInt("parallel");
+        int fileNumPerThread = p.getInt("fileNumPerThread");
+        LOG.info("timeUsed={}, maps={}, parallel={}, fileNumPerThread={}, speed = {}/s",
+            timeUsed, maps, parallel, fileNumPerThread, maps * parallel * fileNumPerThread / (timeUsed/1000/maps));
+
     }
 
     /**
