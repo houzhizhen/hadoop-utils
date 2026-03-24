@@ -189,14 +189,9 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent -
  --parameters "--parallel 2 --readPercent 0 --filesize 10240 --fileNumPerThread 10"
 ```
 
-<<<<<<< HEAD
-=======
 ## RepeatCreateSameFile
 
-重复覆盖写入同一个文件的测试工具，可用于：
-- 测试HDFS文件系统的写入性能
-- 测试并发写入的稳定性
-- 压力测试文件覆盖操作
+重复覆盖写入同一个文件的测试工具
 
 ```bash
 hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatCreateSameFile \
@@ -216,4 +211,24 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatCreateSameFile \
 - 最长单次写入时间及其发生时间
 - 平均吞吐量和每秒写入次数
 
->>>>>>> a7b0ea0 (DistributedReadWriteByPercent set only one basePath)
+## RepeatGetBlockInfo
+
+用于测试 NameNode 清除 dead datanode 时停顿的时间间隔。
+
+```bash
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatGetBlockInfo \
+  --hdfs-path hdfs://localhost:8020/tmp/test.txt \
+  --size 10KB \
+  --time 20m 
+```
+
+参数说明：
+- `hdfs-path`: HDFS文件路径
+- `size`: 文件大小（支持B, KB, MB, GB）
+- `time`: 运行时间（支持ms, s, m, h）
+- `buffer-size`: 缓冲区大小（字节），可选，默认4096
+
+测试完成后会输出统计信息，包括：
+- 总运行时间和写入次数
+- 最长单次写入时间及其发生时间
+- 平均吞吐量和每秒写入次数
