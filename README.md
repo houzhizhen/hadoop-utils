@@ -200,10 +200,9 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent -
 
 ```bash
 hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatCreateSameFile \
-  hdfs://localhost:8020/tmp/test.txt \
-  10KB \
-  20m \
-  4096
+  --hdfs-path hdfs://localhost:8020/tmp/test.txt \
+  --size 10KB \
+  --time 20m 
 ```
 
 参数说明：
