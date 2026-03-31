@@ -232,3 +232,13 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatGetBlockInfo \
 - 总运行时间和写入次数
 - 最长单次写入时间及其发生时间
 - 平均吞吐量和每秒写入次数
+
+## LogBlocksPlugin
+配置 namenode 的 plugin，用于测试清除 dead 的 datanode 后，数据块的 triples 不等于 3的数量，和 triples 数组的元素为空的数量。每 10 秒钟打印一次。
+hdfs-site.xml
+```xml
+ <property>
+      <name>dfs.namenode.plugins</name>
+      <value>org.apache.hadoop.hdfs.server.blockmanagement.LogBlocksPlugin</value>
+  </property>
+```
