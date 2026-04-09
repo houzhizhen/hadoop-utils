@@ -5,6 +5,10 @@ mapred --daemon stop historyserver
 ./upgrade.sh cmd datanodes 'hdfs --daemon stop datanode'
 ./upgrade.sh cmd namenode 'jps'
 ./upgrade.sh cmd datanodes 'jps'
+echo "Waiting for processes to fully stop..."
+sleep 10
+./upgrade.sh cmd namenode 'jps'
+./upgrade.sh cmd datanodes 'jps'
 
 echo starting hdfs
 ./upgrade.sh cmd namenode 'hdfs --daemon start namenode'
