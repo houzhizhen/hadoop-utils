@@ -1,3 +1,4 @@
+set -e
 mapred --daemon stop historyserver
 ./upgrade.sh cmd namenode 'yarn --daemon stop resourcemanager'
 ./upgrade.sh cmd datanodes 'yarn --daemon stop nodemanager'
@@ -6,7 +7,7 @@ mapred --daemon stop historyserver
 ./upgrade.sh cmd namenode 'jps'
 ./upgrade.sh cmd datanodes 'jps'
 echo "Waiting for processes to fully stop..."
-sleep 10
+sleep 20
 ./upgrade.sh cmd namenode 'jps'
 ./upgrade.sh cmd datanodes 'jps'
 
