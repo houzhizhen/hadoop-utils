@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 export PATH=/usr/local/bin:$PATH
 COMMAND=$1
 shift
