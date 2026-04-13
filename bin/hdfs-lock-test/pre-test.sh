@@ -1,5 +1,4 @@
-
-export TARGET_FS=hdfs://xafj-sys-rpm58y98bhi.xafj.baidu.com:8020
+export TARGET_FS=hdfs://xafj-sys-rpm58y98bhi.xafj.baidu.com:8020/
 ## 删除 HDFS 文件
 hadoop fs -rm -r -skipTrash ${TARGET_FS}/*
 sleep 200

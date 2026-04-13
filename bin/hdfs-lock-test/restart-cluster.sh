@@ -5,7 +5,7 @@ mapred --daemon stop historyserver
 ./upgrade.sh cmd namenode 'hdfs --daemon stop namenode'
 ./upgrade.sh cmd datanodes 'hdfs --daemon stop datanode'
 ./upgrade.sh cmd namenode 'jps'
-./upgrade.sh cmd datanodes 'jps'
+./upgrade.sh cmd datanodes 'jps;du -s -h /ssd1/hadoop-3.3.6/share'
 echo "Waiting for processes to fully stop..."
 sleep 20
 ./upgrade.sh cmd namenode 'jps'

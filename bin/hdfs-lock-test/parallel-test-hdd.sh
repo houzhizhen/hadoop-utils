@@ -1,6 +1,6 @@
 
 set -e
-
+./upgrade.sh dist datanodes /etc/hadoop/conf/hdfs-site.xml-hdd /etc/hadoop/conf/hdfs-site.xml
 sh -x use_share_old.sh
 sh -x parallel-write-test.sh "parallel-hdd-before-opt-time1"
 sh -x parallel-write-test.sh "parallel-hdd-before-opt-time2"
