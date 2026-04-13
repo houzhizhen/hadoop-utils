@@ -1,0 +1,1 @@
+nohup hadoop jar ./fs-test-1.8.10.jar com.baidu.fs.parallel.MakeDirAndFile  --base-path /tmp/test-85-percent --iterator-time 552 --iterator-start-index 209 --thread-num 128 --file-per-dir 8 --file-length  33554432 --dirs-per-level 32 >> write-to-85-percent.log 2>&1 &
