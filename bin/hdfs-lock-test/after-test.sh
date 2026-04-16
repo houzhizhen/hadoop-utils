@@ -1,5 +1,4 @@
 set -e
-sleep 10
 echo TAG=${TAG} in after-test.sh
 TIME_SUFFIX=`date +"%H%M%S"`
 curl http://xafj-sys-rpm23qygubp.xafj.baidu.com:8075/jmx > ${TAG}/${TIME_SUFFIX}-dn-rpm23qygubp.jmx 2>/dev/null

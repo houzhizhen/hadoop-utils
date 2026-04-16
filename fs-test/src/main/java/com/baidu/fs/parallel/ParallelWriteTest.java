@@ -69,9 +69,11 @@ public void runInterval() {
             try {
                 fs.mkdirs(path);
                 for (int fileNum = 0; fileNum < fileNumPerThread && ! stopped.get(); fileNum++) {
-                    FSDataOutputStream out = fs.create(new Path(path, "file-" + fileNum));
+                    Path filePath = new Path(path, "file-" + fileNum);
+                    FSDataOutputStream out = fs.create(filePath);
                     out.write(bytes);
                     out.close();
+                    fs.delete(filePath);
                 }
             } catch (IOException e) {
                 stopped.set(true);

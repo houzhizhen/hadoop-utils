@@ -20,7 +20,17 @@ mapred --daemon start historyserver
 ./upgrade.sh cmd namenode 'jps; ps aux | grep java'
 ./upgrade.sh cmd datanodes 'jps; ps aux | grep java'
 
-sleep 120
+# 等待 safemode 退出
+echo "Waiting for safemode to exit..."
+while true; do
+  SAFEMODE=$(hdfs dfsadmin -safemode get 2>/dev/null || true)
+  echo "${SAFEMODE}"
+  if echo "${SAFEMODE}" | grep -q "Safe mode is OFF"; then
+    echo "Safemode exited."
+    break
+  fi
+  sleep 3
+done
 
 # 检查 DataNode 数量
 LIVE_DN=$(hdfs dfsadmin -report 2>/dev/null | grep '^Live datanodes' | grep -oE '[0-9]+')
