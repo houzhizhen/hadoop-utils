@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # 生成1800万个块的脚本
 # 调用12000-thread.sh 15次，每次传递不同的baseDir参数
@@ -29,11 +30,8 @@ do
     echo "开始时间: $(date)"
 
     # 调用12000-thread.sh并传递baseDir参数
-    echo "执行命令: ./12000-thread-no-clean.sh $BASE_DIR_NAME"
-    sh ./12000-thread-no-clean.sh $BASE_DIR_NAME
-
-    # 检查执行状态
-    if [ $? -eq 0 ]; then
+    echo "执行命令: sh -x ./12000-thread-no-clean.sh $BASE_DIR_NAME"
+    if sh -x ./12000-thread-no-clean.sh "$BASE_DIR_NAME"; then
         echo "第 $i 次执行成功完成"
         echo "输出目录: ${TARGET_FS}/test/$BASE_DIR_NAME"
     else
