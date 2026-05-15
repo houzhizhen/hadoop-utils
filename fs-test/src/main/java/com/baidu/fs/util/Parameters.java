@@ -150,6 +150,11 @@ public long getLong(String key, long defaultValue) {
     return Long.parseLong(value);
 }
 
+public boolean getBoolean(String key, boolean defaultValue) {
+    String value = paraMap.get(key);
+    return value == null ? defaultValue : Boolean.parseBoolean(value);
+}
+
 @Override
 public String toString() {
     return paraMap.toString();

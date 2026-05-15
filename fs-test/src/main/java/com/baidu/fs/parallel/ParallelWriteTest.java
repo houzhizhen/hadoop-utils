@@ -23,6 +23,7 @@ private final int parallel;
 private final Path basePath;
 private final int filesize;
 private final int fileNumPerThread;
+private final boolean deleteAfterWrite;
 private final byte[] bytes;
 private FileSystem fs;
 private CountDownLatch latch;
@@ -33,10 +34,12 @@ public ParallelWriteTest(Parameters parameters, CountDownLatch latch) {
     this.filesize = parameters.getInt("filesize", 4096);
     this.bytes = new byte[filesize];
     this.fileNumPerThread = parameters.getInt("fileNumPerThread", 100);
+    this.deleteAfterWrite = parameters.getBoolean("deleteAfterWrite", false);
     LOG.info("parallel={}", parallel);
     LOG.info("basePath={}", basePath);
     LOG.info("filesize={}", filesize);
     LOG.info("fileNumPerThread={}", fileNumPerThread);
+    LOG.info("deleteAfterWrite={}", deleteAfterWrite);
     try {
         this.fs = FileSystem.get(basePath.toUri(), new Configuration());
     } catch (IOException e) {
@@ -73,7 +76,9 @@ public void runInterval() {
                     FSDataOutputStream out = fs.create(filePath);
                     out.write(bytes);
                     out.close();
-                    fs.delete(filePath);
+                    if (deleteAfterWrite) {
+                        fs.delete(filePath);
+                    }
                 }
             } catch (IOException e) {
                 stopped.set(true);
