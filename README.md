@@ -211,6 +211,24 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatCreateSameFile \
 - 最长单次写入时间及其发生时间
 - 平均吞吐量和每秒写入次数
 
+## RepeatMkRmSameDir
+
+重复对同一个目录执行 mkdir 和 delete 的测试工具
+
+```bash
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatMkRmSameDir \
+  --hdfs-path hdfs://xafj-sys-rpm58y98bhi.xafj.baidu.com:8020/tmp/test-dir \
+  --time 20m
+```
+
+参数说明：
+- `hdfs-path`: HDFS目录路径
+- `time`: 运行时间（支持ms, s, m, h）
+
+测试完成后会输出统计信息，包括：
+- mkdir+delete 总次数
+- 最长单次迭代时间
+
 ## RepeatGetBlockInfo
 
 用于测试 NameNode 清除 dead datanode 时停顿的时间间隔。
