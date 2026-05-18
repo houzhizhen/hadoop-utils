@@ -8,6 +8,6 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedReadWriteByPer
  --maps 40 \
  --sleepTime 40000 \
  --baseDir ${TARGET_FS}/test/distributed_test \
- --parameters "--parallel 200 --readPercent 0 --filesize 10240 --fileNumPerThread 100"
+ --parameters "--parallel 200 --readPercent 0 --filesize 10240 --fileNumPerThread 100 --deleteAfterWrite true"
 
 sh -x after-test.sh
