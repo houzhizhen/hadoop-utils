@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.AZ_POLICY_PROVIDER_IMPL_KEY;
@@ -43,6 +44,18 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
 
   private static final Logger LOG = LoggerFactory.getLogger(
       BlockPlacementPolicyAvailableZone.class);
+
+  /**
+   * Hadoop 3.3.6 的 chooseTargetInOrder 和 chooseReplicasToDelete 不接受 srcPath 参数，
+   * 这里通过 ThreadLocal 把 srcPath 从 chooseTarget 传到下游方法。
+   */
+  private static final ThreadLocal<String> CURRENT_SRC = new ThreadLocal<>();
+
+  /**
+   * 自己实现"双选优"逻辑（不用父类的 select，因为 private 进不去）。
+   * 复用父类 protected 的 compareDataNode 来比较两个节点。
+   */
+  private static final Random RAND = new Random();
 
   private AzPolicyProvider azPolicyProvider;
 
@@ -64,6 +77,26 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
     DatanodeDescriptor b = (DatanodeDescriptor) ((DFSNetworkTopology) clusterMap)
         .chooseRandomWithStorageTypeTwoTrial(scope, excludedNode, type);
     return select(a, b);
+  }
+
+  /**
+   * 双选优：复用父类的 compareDataNode。compareDataNode == 0 时 a, b 等价；
+   * 否则按 50% 概率选剩余空间多的那个，避免完全偏向单个节点造成集中。
+   */
+  private DatanodeDescriptor select(DatanodeDescriptor a, DatanodeDescriptor b) {
+    if (a == null) {
+      return b;
+    }
+    if (b == null) {
+      return a;
+    }
+    int ret = compareDataNode(a, b, false);
+    if (ret == 0) {
+      return a;
+    }
+    DatanodeDescriptor preferred = ret < 0 ? a : b;
+    DatanodeDescriptor other = ret < 0 ? b : a;
+    return RAND.nextInt(100) < 60 ? preferred : other;
   }
 
   private DatanodeStorageInfo chooseNodeByAz(String az,
@@ -193,13 +226,17 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
       return DatanodeStorageInfo.EMPTY_ARRAY;
     }
 
-    return super.chooseTarget(srcPath, numOfReplicas, writer, chosen, returnChosenNodes,
-        excludedNodes, blockSize, storagePolicy, flags);
+    CURRENT_SRC.set(srcPath);
+    try {
+      return super.chooseTarget(srcPath, numOfReplicas, writer, chosen, returnChosenNodes,
+          excludedNodes, blockSize, storagePolicy, flags);
+    } finally {
+      CURRENT_SRC.remove();
+    }
   }
 
   @Override
-  protected Node chooseTargetInOrder(String srcPath,
-      int numOfReplicas,
+  protected Node chooseTargetInOrder(int numOfReplicas,
       Node writer,
       final Set<Node> excludedNodes,
       final long blockSize,
@@ -212,6 +249,7 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
 
     int targetRep = results.size() + numOfReplicas;
 
+    String srcPath = CURRENT_SRC.get();
     AzPolicyInfo azPolicyInfo = azPolicyProvider.getAzPolicyInfo(srcPath);
     String[] azPolicy = azPolicyInfo.getAzPolicyArray();
     String mainAz = azPolicyInfo.getMainAz();
@@ -230,7 +268,7 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
     if (isSelectFromMainAz(azPolicy)) {
       if (StringUtils.isEmpty(mainAz)) {
         // 没有配置 mainAz，fallback 到父类
-        return super.chooseTargetInOrder(srcPath, numOfReplicas, writer, excludedNodes, blockSize,
+        return super.chooseTargetInOrder(numOfReplicas, writer, excludedNodes, blockSize,
             maxNodesPerRack, results, avoidStaleNodes, newBlock, storageTypes);
       }
       // 从 mainAz 拿
@@ -338,12 +376,17 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
   }
 
   @Override
-  public List<DatanodeStorageInfo> chooseReplicasToDelete(String srcPath,
+  public List<DatanodeStorageInfo> chooseReplicasToDelete(
       Collection<DatanodeStorageInfo> availableReplicas,
       Collection<DatanodeStorageInfo> delCandidates, int expectedNumOfReplicas,
       List<StorageType> excessTypes, DatanodeDescriptor addedNode, DatanodeDescriptor delNodeHint) {
 
-    AzPolicyInfo azPolicyInfo = azPolicyProvider.getAzPolicyInfo(srcPath);
+    // hadoop 3.3.6 不再传 srcPath，尝试从 ThreadLocal 取；调用栈不来自 chooseTarget 时为 null，
+    // 此时 azPolicyProvider 应当返回默认 policy。
+    String srcPath = CURRENT_SRC.get();
+    AzPolicyInfo azPolicyInfo = srcPath == null
+        ? AzPolicyInfo.DEFAULT
+        : azPolicyProvider.getAzPolicyInfo(srcPath);
 
     // 这个配置是迁移专用，禁用删除多余副本，先拷贝 block 再设置 replication
     if (azPolicyInfo.isDisableRedundantDelete()) {
@@ -353,7 +396,7 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
     String[] azPolicy = azPolicyInfo.getAzPolicyArray();
     // fall back
     if (getBlockType().equals(BlockType.STRIPED) || azPolicy == null || azPolicy.length == 0) {
-      return super.chooseReplicasToDelete(srcPath, availableReplicas, delCandidates,
+      return super.chooseReplicasToDelete(availableReplicas, delCandidates,
           expectedNumOfReplicas, excessTypes, addedNode, delNodeHint);
     }
 
@@ -400,7 +443,7 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
 
     List<DatanodeStorageInfo> result = delCandidateCopy;
     if (expectedNumOfReplicas != 0) {
-      result = super.chooseReplicasToDelete(srcPath,
+      result = super.chooseReplicasToDelete(
           availableReplicas, delCandidates, expectedNumOfReplicas, excessTypesCopy, addedNode,
           null);
     }

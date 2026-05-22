@@ -13,6 +13,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,7 +38,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.az.AzUtils;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeStorageReport;
@@ -143,7 +144,9 @@ public class AzCluster {
     DatanodeStorageReport[] reports = reportsSupplier.get();
     NetworkTopology networkTopology = NetworkTopology.getInstance(conf);
     Set<DatanodeInfo> notInServiceNodes = new HashSet<>();
-    for (DatanodeStorageReport r : DFSUtil.shuffle(reports)) {
+    List<DatanodeStorageReport> shuffledReports = new ArrayList<>(Arrays.asList(reports));
+    Collections.shuffle(shuffledReports);
+    for (DatanodeStorageReport r : shuffledReports) {
       final DatanodeInfo datanode = r.getDatanodeInfo();
       successRate.putIfAbsent(datanode, new SuccessRateCalculator());
       if (!datanode.isInService()) {
