@@ -2,8 +2,8 @@ package org.apache.hadoop.hdfs.server.blockmanagement.az;
 
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.EMPTY_STRING_ARRAY;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import org.apache.hadoop.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.thirdparty.com.google.common.base.Preconditions;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,10 +1,11 @@
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
-import com.google.common.collect.ImmutableList;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.StorageType;
 import org.apache.hadoop.hdfs.AddBlockFlag;
+import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.net.DFSNetworkTopology;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.protocol.BlockType;
@@ -35,8 +36,6 @@ import java.util.Set;
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.AZ_POLICY_PROVIDER_IMPL_KEY;
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzUtils.getAzFromRackLocation;
 
-// TODO: 支持异构存储
-
 /**
  * 这里 rack 的配置是一台 datanode 一个 rack，我们不再感知 rack
  */
@@ -52,10 +51,12 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
   private static final ThreadLocal<String> CURRENT_SRC = new ThreadLocal<>();
 
   /**
-   * 自己实现"双选优"逻辑（不用父类的 select，因为 private 进不去）。
-   * 复用父类 protected 的 compareDataNode 来比较两个节点。
+   * 父类 AvailableSpaceBlockPlacementPolicy.select 是 private，无法直接调用。
+   * 这里复制父类相同的配置项与字段，复用父类 protected 的 compareDataNode 来比较。
    */
   private static final Random RAND = new Random();
+  private int balancedPreference = (int) (100
+      * DFSConfigKeys.DFS_NAMENODE_AVAILABLE_SPACE_BLOCK_PLACEMENT_POLICY_BALANCED_SPACE_PREFERENCE_FRACTION_DEFAULT);
 
   private AzPolicyProvider azPolicyProvider;
 
@@ -63,6 +64,11 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
   public void initialize(Configuration conf, FSClusterStats stats, NetworkTopology clusterMap,
       Host2NodesMap host2datanodeMap) {
     super.initialize(conf, stats, clusterMap, host2datanodeMap);
+    float balancedPreferencePercent = conf.getFloat(
+        DFSConfigKeys.DFS_NAMENODE_AVAILABLE_SPACE_BLOCK_PLACEMENT_POLICY_BALANCED_SPACE_PREFERENCE_FRACTION_KEY,
+        DFSConfigKeys.DFS_NAMENODE_AVAILABLE_SPACE_BLOCK_PLACEMENT_POLICY_BALANCED_SPACE_PREFERENCE_FRACTION_DEFAULT);
+    balancedPreference = (int) (100 * balancedPreferencePercent);
+
     Class<? extends AzPolicyProvider> azPolicyProviderClass = conf.getClass(
         AZ_POLICY_PROVIDER_IMPL_KEY, LocalFileAzPolicyProvider.class, AzPolicyProvider.class);
     this.azPolicyProvider = ReflectionUtils.newInstance(azPolicyProviderClass, conf);
@@ -80,23 +86,22 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
   }
 
   /**
-   * 双选优：复用父类的 compareDataNode。compareDataNode == 0 时 a, b 等价；
-   * 否则按 50% 概率选剩余空间多的那个，避免完全偏向单个节点造成集中。
+   * 与父类 AvailableSpaceBlockPlacementPolicy.select 行为一致：
+   * compareDataNode == 0 时 a, b 等价；否则按 balancedPreference 概率选剩余空间多的节点。
    */
   private DatanodeDescriptor select(DatanodeDescriptor a, DatanodeDescriptor b) {
-    if (a == null) {
-      return b;
+    if (a != null && b != null) {
+      int ret = compareDataNode(a, b, false);
+      if (ret == 0) {
+        return a;
+      } else if (ret < 0) {
+        return (RAND.nextInt(100) < balancedPreference) ? a : b;
+      } else {
+        return (RAND.nextInt(100) < balancedPreference) ? b : a;
+      }
+    } else {
+      return a == null ? b : a;
     }
-    if (b == null) {
-      return a;
-    }
-    int ret = compareDataNode(a, b, false);
-    if (ret == 0) {
-      return a;
-    }
-    DatanodeDescriptor preferred = ret < 0 ? a : b;
-    DatanodeDescriptor other = ret < 0 ? b : a;
-    return RAND.nextInt(100) < 60 ? preferred : other;
   }
 
   private DatanodeStorageInfo chooseNodeByAz(String az,
@@ -228,7 +233,7 @@ public abstract class BlockPlacementPolicyAvailableZone extends AvailableSpaceBl
 
     CURRENT_SRC.set(srcPath);
     try {
-      return super.chooseTarget(srcPath, numOfReplicas, writer, chosen, returnChosenNodes,
+p f      return chooseTarget(srcPath, numOfReplicas, writer, chosen, returnChosenNodes,
           excludedNodes, blockSize, storagePolicy, flags);
     } finally {
       CURRENT_SRC.remove();

@@ -1,7 +1,7 @@
 package org.apache.hadoop.hdfs.server.azmover;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+import org.apache.hadoop.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ImmutableList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;

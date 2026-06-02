@@ -9,7 +9,7 @@
     <modules>
         <module>fs-test</module>
         <module>yarn</module>
-        <module>MultiAZ</module>
+        <module>az</module>
     </modules>
     <packaging>pom</packaging>
 

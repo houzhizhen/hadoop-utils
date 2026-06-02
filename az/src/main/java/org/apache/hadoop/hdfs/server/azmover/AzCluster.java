@@ -9,10 +9,10 @@ import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.DATANO
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.UPDATE_DATANODE_REPORTS_PERIOD;
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.UPDATE_DATANODE_REPORTS_PERIOD_DEFAULT;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import org.apache.hadoop.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ComparisonChain;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ImmutableMap;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

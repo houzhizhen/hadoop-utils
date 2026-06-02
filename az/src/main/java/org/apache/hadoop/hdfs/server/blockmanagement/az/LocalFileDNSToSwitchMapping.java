@@ -6,7 +6,7 @@ import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.DNS_SW
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.DNS_SWITCH_MAPPING_LOCAL_FILE_UPDATE_PERIOD_MS_KEY;
 import static org.apache.hadoop.hdfs.server.blockmanagement.az.AzConstant.UPDATE_DNS_MAPPING_TASK_NAME;
 
-import com.google.common.base.Preconditions;
+import org.apache.hadoop.thirdparty.com.google.common.base.Preconditions;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.net.CachedDNSToSwitchMapping;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,8 +1,8 @@
 package org.apache.hadoop.hdfs.server.azmover;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import org.apache.hadoop.thirdparty.com.google.common.base.Preconditions;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ImmutableList;
+import org.apache.hadoop.thirdparty.com.google.common.collect.ImmutableSet;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
