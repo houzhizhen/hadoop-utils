@@ -41,15 +41,26 @@ public static void run(Parameters parameters) throws InterruptedException, IOExc
     writeParameters.set("basePath", new Path(basePath, "write").toString());
     writeParameters.set("parallel", writeParallel + "");
     long beginTime = System.currentTimeMillis();
+    ParallelReadTest readTest = null;
+    ParallelWriteTest writeTest = null;
     if (readParallel > 0) {
-        new ParallelReadTest(readParameters, latch).start();
+        readTest = new ParallelReadTest(readParameters, latch);
+        readTest.start();
     }
     if (writeParallel > 0) {
-        new ParallelWriteTest(writeParameters, latch).start();
+        writeTest = new ParallelWriteTest(writeParameters, latch);
+        writeTest.start();
     }
 
     latch.await(1, TimeUnit.HOURS);
     long timeUsed = System.currentTimeMillis() - beginTime;
     System.out.println("ParallelReadWrite finished, " + timeUsed + " ms used.");
+    // 把子测试里遇到的第一个异常向上传播，避免"看起来成功"。
+    if (readTest != null) {
+        readTest.checkFailure();
+    }
+    if (writeTest != null) {
+        writeTest.checkFailure();
+    }
 }
 }

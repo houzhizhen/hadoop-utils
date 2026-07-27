@@ -161,24 +161,42 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelTailTest --path bos:
 ## ParallelWriteTest
 ```bash
 exort HADOOP_HEAPSIZE=2g
-hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelWriteTest --basePath hdfs://localhost:8020/test/parallel-write --parallel 10 --filesize 10240 --fileNumPerThread 10
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelWriteTest --basePath hdfs://localhost:8020/test/parallel-write --parallel 10 --filesize 10G --fileNumPerThread 10
 ```
+
+参数说明：
+- `basePath`：写入根路径，每个线程会创建 `basePath/sub<threadNum>/file-<i>`
+- `parallel`：并发线程数
+- `filesize`：单个文件大小，支持带二进制前缀的写法（大小写不敏感，1024 进制），例如 `10G`、`512M`、`4K`、`10240`（纯数字视为字节数）。默认 `4096`
+- `bufferSize`：单次 `write` 的缓冲区大小，同样支持 `10G` / `512M` 之类的写法。默认 `1M`。小于 `filesize` 时按 buffer 循环写；大于 `filesize` 时自动截断到 `filesize`，避免浪费内存
+- `fileNumPerThread`：每个线程写入的文件数，默认 100
+- `deleteAfterWrite`：写完是否删除文件，默认 false
 
 ## ParallelReadTest
 ```bash
 exort HADOOP_HEAPSIZE=2g
-hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadTest --basePath hdfs://localhost:8020/test/parallel-read --parallel 10 --filesize 10240 --fileNumPerThread 10
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadTest --basePath hdfs://localhost:8020/test/parallel-read --parallel 10 --filesize 10G --fileNumPerThread 10
 ```
+
+参数说明：
+- `basePath`：数据根路径，每个线程读取 `basePath/file-<threadNum>`（若不存在会先写出，长度为 `filesize`）
+- `parallel`：并发线程数
+- `filesize`：单个文件大小，写法同 `ParallelWriteTest`，默认 `4096`
+- `bufferSize`：单次 `read` / `write` 的缓冲区大小，默认 `1M`
+- `fileNumPerThread`：每个线程读取的迭代次数，默认 100
+
 ## ParallelReadWriteByPercent
 ```bash
 exort HADOOP_HEAPSIZE=2g
-hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath hdfs://localhost:8020/test/parallel --parallel 10 --readPercent 0 --filesize 10240 --fileNumPerThread 10
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath hdfs://localhost:8020/test/parallel --parallel 10 --readPercent 0 --filesize 10G --fileNumPerThread 10
 ```
 
 ```bash
 exort HADOOP_HEAPSIZE=2g
-hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath file:///ssd1/hdfs/data/temp --parallel 10 --readPercent 0 --filesize 10240 --fileNumPerThread 10
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent --basePath file:///ssd1/hdfs/data/temp --parallel 10 --readPercent 0 --filesize 10G --fileNumPerThread 10
 ```
+除 `readPercent`（读线程占比，`[0,1]` 之间）外，`filesize`、`bufferSize`、`fileNumPerThread` 语义同 `ParallelWriteTest` / `ParallelReadTest`。
+
 ## DistributedReadWriteByPercent
 
 ```java
@@ -186,8 +204,9 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelReadWriteByPercent -
  --maps 10 \
  --sleepTime 1000 \
  --baseDir hdfs://localhost:8020/tmp/distributed_test \
- --parameters "--parallel 2 --readPercent 0 --filesize 10240 --fileNumPerThread 10"
+ --parameters "--parallel 2 --readPercent 0 --filesize 10G --fileNumPerThread 10"
 ```
+`--parameters` 里的参数会透传给每个 mapper 内的 `ParallelReadWriteByPercent`，`filesize` / `bufferSize` 支持 `10G` / `512M` 这类写法。
 
 ## RepeatCreateSameFile
 
@@ -250,6 +269,123 @@ hadoop jar fs-test-1.8.10.jar com.baidu.fs.raw.RepeatGetBlockInfo \
 - 总运行时间和写入次数
 - 最长单次写入时间及其发生时间
 - 平均吞吐量和每秒写入次数
+
+## ParallelTestDirsExist
+单机多线程按序执行 `fs.exists()` 的测试工具。启动 `parallel` 个线程，每个线程内**按顺序**探测 `fileNumPerThread` 个路径是否存在。
+
+```bash
+export HADOOP_HEAPSIZE=2g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelTestDirsExist \
+  --basePath hdfs://localhost:8020/test/parallel-write \
+  --parallel 10 \
+  --fileNumPerThread 10 \
+  --useSubDir true
+```
+
+参数说明：
+- `basePath`：路径根地址
+- `parallel`：并发线程数
+- `fileNumPerThread`：每个线程按序探测的文件数，默认 100
+- `useSubDir`：是否每线程一个子目录，默认 true
+    - `true`：探测 `basePath/sub<threadNum>/file-<i>`，与 `ParallelWriteTest` 的写入目录结构对齐
+    - `false`：全部平铺，探测 `basePath/file-<threadNum>-<i>`
+- `subDirPrefix`：子目录前缀，默认 `sub`
+- `filePrefix`：文件名前缀，默认 `file-`
+
+执行完成后打印 `existCount` 和 `notExistCount`。`exists()` 返回 false 不视为错误，只累计到 `notExistCount`；只有抛 `IOException` 才让所有线程尽快退出。
+
+## DistributedTestDirsExist
+基于 MapReduce 的分布式版本，起 `maps` 个 mapper-only 任务，每个 mapper 内部调用 `ParallelTestDirsExist`。所有 mapper 通过 `sleepTime` 定义的 barrier 尽量同时起跑。
+
+先用 `ParallelWriteTest` 或 `DistributedReadWriteByPercent` 之类工具预置数据，再跑 exists 探测（存在率场景）：
+```bash
+# Step 1: 预置数据（每 mapper 独立目录 map-<taskID>/sub<i>/file-<j>）
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedReadWriteByPercent \
+  --maps 10 \
+  --sleepTime 60000 \
+  --baseDir bos://bmr-bj-namespace/dirs_exist_test \
+  --parameters "--parallel 100 --readPercent 0 --filesize 1024 --fileNumPerThread 100"
+
+# Step 2: 对同样的路径按序 exists
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedTestDirsExist \
+  --maps 10 \
+  --sleepTime 60000 \
+  --baseDir bos://bmr-bj-namespace/dirs_exist_test \
+  --parameters "--parallel 100 --fileNumPerThread 100 --useSubDir true"
+```
+> 注意：`DistributedReadWriteByPercent` 的写数据落在 `baseDir/map-<taskID>/write/sub<i>/file-<j>`，而本工具默认落在 `baseDir/map-<taskID>/sub<i>/file-<j>`，路径不完全一致；如需精确对齐，请把两个工具的写路径统一，或用下一个"不存在率场景"的方式。
+
+对空目录跑 exists（不存在率场景）：
+```bash
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedTestDirsExist \
+  --maps 10 \
+  --sleepTime 60000 \
+  --baseDir bos://bmr-bj-namespace/dirs_exist_test \
+  --parameters "--parallel 100 --fileNumPerThread 100"
+# NotExistCount ≈ maps * parallel * fileNumPerThread
+```
+
+顶层参数（与 `DistributedReadWriteByPercent` 一致）：
+- `maps`：mapper 个数，约等于参与压测的节点数
+- `sleepTime`：barrier 目标启动时刻相对提交时刻的毫秒偏移，生产建议 30000–60000
+- `baseDir`：MR 控制目录 + 每 mapper 默认 basePath 的父目录
+- `parameters`：透传给 mapper 内 `ParallelTestDirsExist` 的参数字符串
+
+`parameters` 内可用参数除 `ParallelTestDirsExist` 的全部参数外，还支持：
+- `overrideBasePath`：mapper 是否把 `basePath` 覆写为 `baseDir/map-<taskID>`，默认 `true`。设为 `false` 时使用 `parameters` 里显式传入的 `basePath`，用于对接已有目录
+
+执行完成后聚合以下 counter 并计算吞吐：
+- `TimeUSED`：所有 mapper 耗时之和（毫秒）
+- `ExistCount` / `NotExistCount`：全局存在/不存在的探测数
+
+## ParallelMkDirs
+单机多线程按序执行 `fs.mkdirs()` 的压测工具。启动 `parallel` 个线程，每个线程内**按顺序**创建 `fileNumPerThread` 个目录。
+
+```bash
+export HADOOP_HEAPSIZE=2g
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.parallel.ParallelMkDirs \
+  --basePath hdfs://localhost:8020/test/parallel-mkdirs \
+  --parallel 10 \
+  --fileNumPerThread 100 \
+  --useSubDir true
+```
+
+参数说明：
+- `basePath`：路径根地址，会尝试 `mkdirs(basePath)` 兜底；**不会**主动清理已有子树，避免误删
+- `parallel`：并发线程数
+- `fileNumPerThread`：每个线程按序创建的目录数，默认 100
+- `useSubDir`：是否每线程一个子目录，默认 true
+    - `true`：创建 `basePath/sub<threadNum>/dir-<i>`，与 `ParallelWriteTest` / `ParallelTestDirsExist` 目录约定一致
+    - `false`：全部平铺，创建 `basePath/dir-<threadNum>-<i>`，用来测单目录锁竞争
+- `subDirPrefix`：子目录前缀，默认 `sub`
+- `dirPrefix`：目录名前缀，默认 `dir-`
+
+执行完成后打印 `mkDirsCount`。任一线程抛 `IOException` 会让所有线程尽快退出，并作为最终失败上抛（区别于 `ParallelTestDirsExist`，`mkdirs` 场景没有"合法的 false"结果）。
+
+## DistributedMkDirs
+基于 MapReduce 的分布式版本，起 `maps` 个 mapper-only 任务，每个 mapper 内部调用 `ParallelMkDirs`。所有 mapper 通过 `sleepTime` 定义的 barrier 尽量同时起跑。
+
+```bash
+hadoop jar fs-test-1.8.10.jar com.baidu.fs.distributed.DistributedMkDirs \
+  --maps 10 \
+  --sleepTime 60000 \
+  --baseDir bos://bmr-bj-namespace/distributed_mkdirs \
+  --parameters "--parallel 100 --fileNumPerThread 100 --useSubDir true"
+# MkDirsCount ≈ maps * parallel * fileNumPerThread
+```
+
+顶层参数（与 `DistributedReadWriteByPercent` / `DistributedTestDirsExist` 一致）：
+- `maps`：mapper 个数，约等于参与压测的节点数
+- `sleepTime`：barrier 目标启动时刻相对提交时刻的毫秒偏移，生产建议 30000–60000
+- `baseDir`：MR 控制目录 + 每 mapper 默认 basePath 的父目录
+- `parameters`：透传给 mapper 内 `ParallelMkDirs` 的参数字符串
+
+`parameters` 内可用参数除 `ParallelMkDirs` 的全部参数外，还支持：
+- `overrideBasePath`：mapper 是否把 `basePath` 覆写为 `baseDir/map-<taskID>`，默认 `true`。设为 `false` 时使用 `parameters` 里显式传入的 `basePath`，用于对接已有目录
+
+执行完成后聚合以下 counter 并计算吞吐：
+- `TimeUSED`：所有 mapper 耗时之和（毫秒）
+- `MkDirsCount`：全局成功 mkdir 的总次数
 
 ## LogBlocksPlugin
 配置 namenode 的 plugin，用于测试清除 dead 的 datanode 后，数据块的 triples 不等于 3的数量，和 triples 数组的元素为空的数量。每 10 秒钟打印一次。

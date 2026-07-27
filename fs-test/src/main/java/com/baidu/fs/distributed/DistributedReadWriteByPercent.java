@@ -142,7 +142,7 @@ public class DistributedReadWriteByPercent {
      * 主要的运行方法，负责整个测试流程的控制。
      *
      * @param args 命令行参数
-     * @return 退出码
+     * @return 退出码；0 表示 MR 作业整体成功，非 0 表示至少有 mapper 失败
      * @throws Exception 如果测试过程中发生错误
      */
     public int run(String[] args) throws Exception {
@@ -157,10 +157,7 @@ public class DistributedReadWriteByPercent {
         createControlFiles();
 
         // Run the tests as a map reduce job
-        runTests();
-
-        // Analyze results
-        return 0;
+        return runTests();
     }
 
     private void cleanupBeforeTestrun() throws IOException {
@@ -196,7 +193,7 @@ public class DistributedReadWriteByPercent {
     }
 
 
-    private void runTests() throws IOException, InterruptedException, ClassNotFoundException {
+    private int runTests() throws IOException, InterruptedException, ClassNotFoundException {
 
         Job job = Job.getInstance(conf, "Distributed ReadWrite Test By Percent");
         job.setMapSpeculativeExecution(false);
@@ -208,16 +205,17 @@ public class DistributedReadWriteByPercent {
         job.setMaxMapAttempts(1);
         FileInputFormat.addInputPath(job, new Path(baseDir, CONTROL_DIR_NAME));
         FileOutputFormat.setOutputPath(job, new Path(baseDir, OUTPUT_DIR_NAME));
-        job.waitForCompletion(true);
+        boolean success = job.waitForCompletion(true);
         long timeUsed = job.getCounters().findCounter(DistributedReadWriteByPercentCounter.TimeUSED).getValue();
         int maps = conf.getInt("maps", 10);
         String[] args = conf.get(PARAMETERS).split(" ");
         Parameters p = Parameters.get(args);
         int parallel = p.getInt("parallel");
         int fileNumPerThread = p.getInt("fileNumPerThread");
-        LOG.info("timeUsed={}, maps={}, parallel={}, fileNumPerThread={}, speed = {}/s",
-            timeUsed, maps, parallel, fileNumPerThread, maps * parallel * fileNumPerThread / (timeUsed/1000/maps));
-
+        LOG.info("success={}, timeUsed={}, maps={}, parallel={}, fileNumPerThread={}, speed = {}/s",
+            success, timeUsed, maps, parallel, fileNumPerThread,
+            maps * parallel * fileNumPerThread / (timeUsed / 1000 / maps));
+        return success ? 0 : 1;
     }
 
     /**
@@ -227,6 +225,8 @@ public class DistributedReadWriteByPercent {
      * @throws Exception 如果测试过程中发生错误
      */
     public static void main(String[] args) throws Exception {
-        new DistributedReadWriteByPercent().run(args);
+        int exitCode = new DistributedReadWriteByPercent().run(args);
+        // 任一 mapper 失败时进程以非零退出，方便脚本/CI 上层感知
+        System.exit(exitCode);
     }
 }

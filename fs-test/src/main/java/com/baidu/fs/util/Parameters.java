@@ -1,5 +1,7 @@
 package com.baidu.fs.util;
 
+import org.apache.hadoop.util.StringUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -148,6 +150,19 @@ public long getLong(String key, long defaultValue) {
         return defaultValue;
     }
     return Long.parseLong(value);
+}
+
+/**
+ * 解析支持二进制前缀的字节大小参数，如 "10G"、"512M"、"4K"、"10240000000"。
+ * 后缀含义遵循 Hadoop 惯例（K=1024, M=1024^2, G=1024^3, T=1024^4, ...）。
+ * 大小写不敏感。纯数字则按字节数处理。
+ */
+public long getBytes(String key, long defaultValue) {
+    String value = paraMap.get(key);
+    if (value == null) {
+        return defaultValue;
+    }
+    return StringUtils.TraditionalBinaryPrefix.string2long(value);
 }
 
 public boolean getBoolean(String key, boolean defaultValue) {
